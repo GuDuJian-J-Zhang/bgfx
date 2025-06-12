@@ -361,20 +361,19 @@ VK_IMPORT_DEVICE
 			EXT_shader_viewport_index_layer,
 			KHR_draw_indirect_count,
 			KHR_get_physical_device_properties2,
-
-#	if BX_PLATFORM_ANDROID
-			KHR_android_surface,
-#	elif BX_PLATFORM_LINUX
-			KHR_wayland_surface,
-			KHR_xlib_surface,
-			KHR_xcb_surface,
-#	elif BX_PLATFORM_WINDOWS
-			KHR_win32_surface,
-#	elif BX_PLATFORM_OSX
-			MVK_macos_surface,
-#	elif BX_PLATFORM_NX
-			NN_vi_surface,
-#	endif
+//#	if BX_PLATFORM_ANDROID
+//			KHR_android_surface,
+//#	elif BX_PLATFORM_LINUX
+//			KHR_wayland_surface,
+//			KHR_xlib_surface,
+//			KHR_xcb_surface,
+//#	elif BX_PLATFORM_WINDOWS
+//			KHR_win32_surface,
+//#	elif BX_PLATFORM_OSX
+//			MVK_macos_surface,
+//#	elif BX_PLATFORM_NX
+//			NN_vi_surface,
+//#	endif
 
 			Count
 		};
@@ -400,19 +399,19 @@ VK_IMPORT_DEVICE
 		{ "VK_EXT_shader_viewport_index_layer",     1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_draw_indirect_count",             1, false, false, true,                                                          Layer::Count },
 		{ "VK_KHR_get_physical_device_properties2", 1, false, false, true,                                                          Layer::Count },
-#	if BX_PLATFORM_ANDROID
-		{ VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
-#	elif BX_PLATFORM_LINUX
-		{ VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
-		{ VK_KHR_XLIB_SURFACE_EXTENSION_NAME,       1, false, false, true,                                                          Layer::Count },
-		{ VK_KHR_XCB_SURFACE_EXTENSION_NAME,        1, false, false, true,                                                          Layer::Count },
-#	elif BX_PLATFORM_WINDOWS
-		{ VK_KHR_WIN32_SURFACE_EXTENSION_NAME,      1, false, false, true,                                                          Layer::Count },
-#	elif BX_PLATFORM_OSX
-		{ VK_MVK_MACOS_SURFACE_EXTENSION_NAME,      1, false, false, true,                                                          Layer::Count },
-#	elif BX_PLATFORM_NX
-		{ VK_NN_VI_SURFACE_EXTENSION_NAME,          1, false, false, true,                                                          Layer::Count },
-#	endif
+//#	if BX_PLATFORM_ANDROID
+//		{ VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
+//#	elif BX_PLATFORM_LINUX
+//		{ VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,    1, false, false, true,                                                          Layer::Count },
+//		{ VK_KHR_XLIB_SURFACE_EXTENSION_NAME,       1, false, false, true,                                                          Layer::Count },
+//		{ VK_KHR_XCB_SURFACE_EXTENSION_NAME,        1, false, false, true,                                                          Layer::Count },
+//#	elif BX_PLATFORM_WINDOWS
+//		{ VK_KHR_WIN32_SURFACE_EXTENSION_NAME,      1, false, false, true,                                                          Layer::Count },
+//#	elif BX_PLATFORM_OSX
+//		{ VK_MVK_MACOS_SURFACE_EXTENSION_NAME,      1, false, false, true,                                                          Layer::Count },
+//#	elif BX_PLATFORM_NX
+//		{ VK_NN_VI_SURFACE_EXTENSION_NAME,          1, false, false, true,                                                          Layer::Count },
+//#	endif
 	};
 	static_assert(Extension::Count == BX_COUNTOF(s_extension) );
 
@@ -1132,6 +1131,13 @@ VK_IMPORT_DEVICE
 
 #define MAX_DESCRIPTOR_SETS (1024 * BGFX_CONFIG_MAX_FRAME_LATENCY)
 
+	struct VulkanContext
+	{
+		void* vk_instance{ nullptr };
+		void* vk_physical_device{ nullptr };
+		void* vk_logical_device{ nullptr };
+	};
+
 	struct RendererContextVK : public RendererContextI
 	{
 		RendererContextVK()
@@ -1172,6 +1178,28 @@ VK_IMPORT_DEVICE
 			ErrorState::Enum errorState = ErrorState::Default;
 
 			const bool headless = NULL == g_platformData.nwh;
+
+			if (g_platformData.context)
+			{
+				VulkanContext* p_custom_context = reinterpret_cast<VulkanContext*>(g_platformData.context);
+				if (p_custom_context->vk_instance)
+				{
+					auto raw_vk_instance = reinterpret_cast<VkInstance>(p_custom_context->vk_instance);
+					m_instance = raw_vk_instance;
+					m_external_instance = true;
+				}
+				if (p_custom_context->vk_physical_device)
+				{
+					auto raw_vk_physical_device = reinterpret_cast<VkPhysicalDevice*>(p_custom_context->vk_physical_device);
+					m_physicalDevice = *raw_vk_physical_device;
+				}
+				if (p_custom_context->vk_logical_device)
+				{
+					auto raw_vk_logical_device = reinterpret_cast<VkDevice*>(p_custom_context->vk_logical_device);
+					m_device = *raw_vk_logical_device;
+					m_external_logical_device = true;
+				}
+			}
 
 			const void* nextFeatures = NULL;
 			VkPhysicalDeviceLineRasterizationFeaturesEXT lineRasterizationFeatures;
@@ -1277,6 +1305,19 @@ VK_IMPORT
 				if (!headless)
 				{
 					enabledExtension[numEnabledExtensions++] = VK_KHR_SURFACE_EXTENSION_NAME;
+#	if BX_PLATFORM_ANDROID
+					enabledExtension[numEnabledExtensions++] = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
+#	elif BX_PLATFORM_LINUX
+					enabledExtension[numEnabledExtensions++] = VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
+					enabledExtension[numEnabledExtensions++] = VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
+					enabledExtension[numEnabledExtensions++] = VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+#	elif BX_PLATFORM_WINDOWS
+                    enabledExtension[numEnabledExtensions++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+#	elif BX_PLATFORM_OSX
+                    enabledExtension[numEnabledExtensions++] = VK_MVK_MACOS_SURFACE_EXTENSION_NAME;
+#	elif BX_PLATFORM_NX
+                    enabledExtension[numEnabledExtensions++] = VK_NN_VI_SURFACE_EXTENSION_NAME;
+#	endif
 				}
 
 				for (uint32_t ii = 0; ii < Extension::Count; ++ii)
@@ -1334,42 +1375,45 @@ VK_IMPORT
 				appInfo.engineVersion      = BGFX_API_VERSION;
 				appInfo.apiVersion         = vulkanApiVersionSelector;
 
-				VkInstanceCreateInfo ici;
-				ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-				ici.pNext = NULL;
-				ici.flags = 0
-					| (BX_ENABLED(BX_PLATFORM_OSX) ? VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR : 0)
-					;
-				ici.pApplicationInfo        = &appInfo;
-				ici.enabledLayerCount       = numEnabledLayers;
-				ici.ppEnabledLayerNames     = enabledLayer;
-				ici.enabledExtensionCount   = numEnabledExtensions;
-				ici.ppEnabledExtensionNames = enabledExtension;
-
-				if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
+				if (!m_instance)
 				{
-					// Validation layer is calling freeFunction with pointers that are not allocated
-					// via callback mechanism. This is bug in validation layer, and work-around
-					// would be to keep track of allocated pointers and ignore those that are not
-					// allocated by it.
-					//
-					// Anyhow we just let VK take care of memory, until they fix the issue...
-					//
-					// s_allocationCb.pUserData = g_allocator;
-					// m_allocatorCb = &s_allocationCb;
-					BX_UNUSED(s_allocationCb);
-				}
+					VkInstanceCreateInfo ici;
+					ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+					ici.pNext = NULL;
+					ici.flags = 0
+						| (BX_ENABLED(BX_PLATFORM_OSX) ? VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR : 0)
+						;
+					ici.pApplicationInfo = &appInfo;
+					ici.enabledLayerCount = numEnabledLayers;
+					ici.ppEnabledLayerNames = enabledLayer;
+					ici.enabledExtensionCount = numEnabledExtensions;
+					ici.ppEnabledExtensionNames = enabledExtension;
 
-				result = vkCreateInstance(
-					  &ici
-					, m_allocatorCb
-					, &m_instance
+					if (BX_ENABLED(BGFX_CONFIG_DEBUG))
+					{
+						// Validation layer is calling freeFunction with pointers that are not allocated
+						// via callback mechanism. This is bug in validation layer, and work-around
+						// would be to keep track of allocated pointers and ignore those that are not
+						// allocated by it.
+						//
+						// Anyhow we just let VK take care of memory, until they fix the issue...
+						//
+						// s_allocationCb.pUserData = g_allocator;
+						// m_allocatorCb = &s_allocationCb;
+						BX_UNUSED(s_allocationCb);
+					}
+
+					result = vkCreateInstance(
+						&ici
+						, m_allocatorCb
+						, &m_instance
 					);
 
-				if (VK_SUCCESS != result)
-				{
-					BX_TRACE("Init error: vkCreateInstance failed %d: %s.", result, getName(result) );
-					goto error;
+					if (VK_SUCCESS != result)
+					{
+						BX_TRACE("Init error: vkCreateInstance failed %d: %s.", result, getName(result));
+						goto error;
+					}
 				}
 
 				m_instanceApiVersion = vulkanApiVersionSelector;
@@ -1403,153 +1447,161 @@ VK_IMPORT_INSTANCE
 
 			if (s_extension[Extension::EXT_debug_report].m_supported)
 			{
-				VkDebugReportCallbackCreateInfoEXT drcb;
-				drcb.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-				drcb.pNext = NULL;
-				drcb.pfnCallback = debugReportCb;
-				drcb.pUserData   = NULL;
-				drcb.flags       = 0
-					| VK_DEBUG_REPORT_ERROR_BIT_EXT
-					| VK_DEBUG_REPORT_WARNING_BIT_EXT
-					;
-				result = vkCreateDebugReportCallbackEXT(m_instance
-					, &drcb
-					, m_allocatorCb
-					, &m_debugReportCallback
+				if (vkCreateDebugReportCallbackEXT)
+				{
+					VkDebugReportCallbackCreateInfoEXT drcb;
+					drcb.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+					drcb.pNext = NULL;
+					drcb.pfnCallback = debugReportCb;
+					drcb.pUserData = NULL;
+					drcb.flags = 0
+						| VK_DEBUG_REPORT_ERROR_BIT_EXT
+						| VK_DEBUG_REPORT_WARNING_BIT_EXT
+						;
+					result = vkCreateDebugReportCallbackEXT(m_instance
+						, &drcb
+						, m_allocatorCb
+						, &m_debugReportCallback
 					);
-				BX_WARN(VK_SUCCESS == result, "vkCreateDebugReportCallbackEXT failed %d: %s.", result, getName(result) );
+					BX_WARN(VK_SUCCESS == result, "vkCreateDebugReportCallbackEXT failed %d: %s.", result, getName(result));
+				}
 			}
 
 			{
-				BX_TRACE("---");
+				if (!m_physicalDevice)
+				{
+					BX_TRACE("---");
 
-				uint32_t numPhysicalDevices;
-				result = vkEnumeratePhysicalDevices(m_instance
-					, &numPhysicalDevices
-					, NULL
+					uint32_t numPhysicalDevices;
+					result = vkEnumeratePhysicalDevices(m_instance
+						, &numPhysicalDevices
+						, NULL
 					);
 
-				if (VK_SUCCESS != result)
-				{
+					if (VK_SUCCESS != result)
+					{
 					BX_TRACE("Init error: vkEnumeratePhysicalDevices failed %d: %s.", result, getName(result) );
-					goto error;
-				}
+						goto error;
+					}
 
-				VkPhysicalDevice physicalDevices[4];
+					VkPhysicalDevice physicalDevices[4];
 				numPhysicalDevices = bx::min<uint32_t>(numPhysicalDevices, BX_COUNTOF(physicalDevices) );
-				result = vkEnumeratePhysicalDevices(m_instance
-					, &numPhysicalDevices
-					, physicalDevices
+					result = vkEnumeratePhysicalDevices(m_instance
+						, &numPhysicalDevices
+						, physicalDevices
 					);
 
-				if (VK_SUCCESS != result)
-				{
+					if (VK_SUCCESS != result)
+					{
 					BX_TRACE("Init error: vkEnumeratePhysicalDevices failed %d: %s.", result, getName(result) );
-					goto error;
-				}
+						goto error;
+					}
 
-				Extension physicalDeviceExtensions[4][Extension::Count];
+					Extension physicalDeviceExtensions[4][Extension::Count];
 
-				uint32_t physicalDeviceIdx         = UINT32_MAX;
-				uint32_t fallbackPhysicalDeviceIdx = UINT32_MAX;
+					uint32_t physicalDeviceIdx = UINT32_MAX;
+					uint32_t fallbackPhysicalDeviceIdx = UINT32_MAX;
 
-				for (uint32_t ii = 0; ii < numPhysicalDevices; ++ii)
-				{
-					VkPhysicalDeviceProperties pdp;
-					vkGetPhysicalDeviceProperties(physicalDevices[ii], &pdp);
+					for (uint32_t ii = 0; ii < numPhysicalDevices; ++ii)
+					{
+						VkPhysicalDeviceProperties pdp;
+						vkGetPhysicalDeviceProperties(physicalDevices[ii], &pdp);
 
-					BX_TRACE("Physical device %d:", ii);
-					BX_TRACE("\t          Name: %s", pdp.deviceName);
-					BX_TRACE("\t   API version: %d.%d.%d"
-						, VK_API_VERSION_MAJOR(pdp.apiVersion)
-						, VK_API_VERSION_MINOR(pdp.apiVersion)
-						, VK_API_VERSION_PATCH(pdp.apiVersion)
+						BX_TRACE("Physical device %d:", ii);
+						BX_TRACE("\t          Name: %s", pdp.deviceName);
+						BX_TRACE("\t   API version: %d.%d.%d"
+							, VK_API_VERSION_MAJOR(pdp.apiVersion)
+							, VK_API_VERSION_MINOR(pdp.apiVersion)
+							, VK_API_VERSION_PATCH(pdp.apiVersion)
 						);
-					BX_TRACE("\t   API variant: %d", VK_API_VERSION_VARIANT(pdp.apiVersion) );
-					BX_TRACE("\tDriver version: %x", pdp.driverVersion);
-					BX_TRACE("\t      VendorId: %x", pdp.vendorID);
-					BX_TRACE("\t      DeviceId: %x", pdp.deviceID);
-					BX_TRACE("\t          Type: %d", pdp.deviceType);
+						BX_TRACE("\t   API variant: %d", VK_API_VERSION_VARIANT(pdp.apiVersion));
+						BX_TRACE("\tDriver version: %x", pdp.driverVersion);
+						BX_TRACE("\t      VendorId: %x", pdp.vendorID);
+						BX_TRACE("\t      DeviceId: %x", pdp.deviceID);
+						BX_TRACE("\t          Type: %d", pdp.deviceType);
 
-					if (VK_PHYSICAL_DEVICE_TYPE_CPU == pdp.deviceType)
-					{
-						pdp.vendorID = BGFX_PCI_ID_SOFTWARE_RASTERIZER;
-					}
-
-					g_caps.gpu[ii].vendorId = uint16_t(pdp.vendorID);
-					g_caps.gpu[ii].deviceId = uint16_t(pdp.deviceID);
-					++g_caps.numGPUs;
-
-					if ( (BGFX_PCI_ID_NONE != g_caps.vendorId ||            0 != g_caps.deviceId)
-					&&   (BGFX_PCI_ID_NONE == g_caps.vendorId || pdp.vendorID == g_caps.vendorId)
-					&&   (               0 == g_caps.deviceId || pdp.deviceID == g_caps.deviceId) )
-					{
-						if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
-						||  pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+						if (VK_PHYSICAL_DEVICE_TYPE_CPU == pdp.deviceType)
 						{
-							fallbackPhysicalDeviceIdx = ii;
+							pdp.vendorID = BGFX_PCI_ID_SOFTWARE_RASTERIZER;
 						}
 
-						physicalDeviceIdx = ii;
-					}
-					else if (UINT32_MAX == physicalDeviceIdx)
-					{
-						if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+						g_caps.gpu[ii].vendorId = uint16_t(pdp.vendorID);
+						g_caps.gpu[ii].deviceId = uint16_t(pdp.deviceID);
+						++g_caps.numGPUs;
+
+						if ((BGFX_PCI_ID_NONE != g_caps.vendorId || 0 != g_caps.deviceId)
+							&& (BGFX_PCI_ID_NONE == g_caps.vendorId || pdp.vendorID == g_caps.vendorId)
+							&& (0 == g_caps.deviceId || pdp.deviceID == g_caps.deviceId))
 						{
-							fallbackPhysicalDeviceIdx = ii;
-						}
-						else if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-						{
+							if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+								|| pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+							{
+								fallbackPhysicalDeviceIdx = ii;
+							}
+
 							physicalDeviceIdx = ii;
 						}
-					}
+						else if (UINT32_MAX == physicalDeviceIdx)
+						{
+							if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+							{
+								fallbackPhysicalDeviceIdx = ii;
+							}
+							else if (pdp.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+							{
+								physicalDeviceIdx = ii;
+							}
+						}
 
-					VkPhysicalDeviceMemoryProperties pdmp;
-					vkGetPhysicalDeviceMemoryProperties(physicalDevices[ii], &pdmp);
+						VkPhysicalDeviceMemoryProperties pdmp;
+						vkGetPhysicalDeviceMemoryProperties(physicalDevices[ii], &pdmp);
 
-					BX_TRACE("\tMemory type count: %d", pdmp.memoryTypeCount);
-					for (uint32_t jj = 0; jj < pdmp.memoryTypeCount; ++jj)
-					{
-						BX_TRACE("\t%3d: flags 0x%08x, index %d"
-							, jj
-							, pdmp.memoryTypes[jj].propertyFlags
-							, pdmp.memoryTypes[jj].heapIndex
+						BX_TRACE("\tMemory type count: %d", pdmp.memoryTypeCount);
+						for (uint32_t jj = 0; jj < pdmp.memoryTypeCount; ++jj)
+						{
+							BX_TRACE("\t%3d: flags 0x%08x, index %d"
+								, jj
+								, pdmp.memoryTypes[jj].propertyFlags
+								, pdmp.memoryTypes[jj].heapIndex
 							);
-					}
+						}
 
-					BX_TRACE("\tMemory heap count: %d", pdmp.memoryHeapCount);
-					for (uint32_t jj = 0; jj < pdmp.memoryHeapCount; ++jj)
-					{
-						char size[16];
-						bx::prettify(size, BX_COUNTOF(size), pdmp.memoryHeaps[jj].size);
-						BX_TRACE("\t%3d: flags 0x%08x, size %10s"
-							, jj
-							, pdmp.memoryHeaps[jj].flags
-							, size
+						BX_TRACE("\tMemory heap count: %d", pdmp.memoryHeapCount);
+						for (uint32_t jj = 0; jj < pdmp.memoryHeapCount; ++jj)
+						{
+							char size[16];
+							bx::prettify(size, BX_COUNTOF(size), pdmp.memoryHeaps[jj].size);
+							BX_TRACE("\t%3d: flags 0x%08x, size %10s"
+								, jj
+								, pdmp.memoryHeaps[jj].flags
+								, size
 							);
+						}
+
+						bx::memCopy(&physicalDeviceExtensions[ii][0], &s_extension[0], sizeof(s_extension));
+						dumpExtensions(physicalDevices[ii], physicalDeviceExtensions[ii]);
 					}
 
-					bx::memCopy(&physicalDeviceExtensions[ii][0], &s_extension[0], sizeof(s_extension) );
-					dumpExtensions(physicalDevices[ii], physicalDeviceExtensions[ii]);
+					if (UINT32_MAX == physicalDeviceIdx)
+					{
+						physicalDeviceIdx = UINT32_MAX == fallbackPhysicalDeviceIdx
+							? 0
+							: fallbackPhysicalDeviceIdx
+							;
+					}
+
+					m_physicalDevice = physicalDevices[physicalDeviceIdx];
+					bx::memCopy(&s_extension[0], &physicalDeviceExtensions[physicalDeviceIdx][0], sizeof(s_extension));
+					BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.deviceName);
 				}
-
-				if (UINT32_MAX == physicalDeviceIdx)
+				else
 				{
-					physicalDeviceIdx = UINT32_MAX == fallbackPhysicalDeviceIdx
-						? 0
-						: fallbackPhysicalDeviceIdx
-						;
+					dumpExtensions(m_physicalDevice, s_extension);
 				}
-
-				m_physicalDevice = physicalDevices[physicalDeviceIdx];
-
-				bx::memCopy(&s_extension[0], &physicalDeviceExtensions[physicalDeviceIdx][0], sizeof(s_extension) );
 
 				vkGetPhysicalDeviceProperties(m_physicalDevice, &m_deviceProperties);
 				g_caps.vendorId = uint16_t(m_deviceProperties.vendorID);
 				g_caps.deviceId = uint16_t(m_deviceProperties.deviceID);
-
-				BX_TRACE("Using physical device %d: %s", physicalDeviceIdx, m_deviceProperties.deviceName);
 
 				VkPhysicalDeviceFeatures supportedFeatures;
 
@@ -1796,6 +1848,7 @@ VK_IMPORT_INSTANCE
 				}
 			}
 
+			if (!m_device)
 			{
 				uint32_t numEnabledLayers = 0;
 				const char* enabledLayer[Layer::Count];
@@ -2192,14 +2245,22 @@ VK_IMPORT_DEVICE
 			vkDestroy(m_pipelineCache);
 			vkDestroy(m_descriptorPool);
 
-			vkDestroyDevice(m_device, m_allocatorCb);
+			if (!m_external_logical_device)
+			{
+				vkDestroyDevice(m_device, m_allocatorCb);
+			}
+			m_external_logical_device = false;
 
 			if (VK_NULL_HANDLE != m_debugReportCallback)
 			{
 				vkDestroyDebugReportCallbackEXT(m_instance, m_debugReportCallback, m_allocatorCb);
 			}
 
-			vkDestroyInstance(m_instance, m_allocatorCb);
+			if (!m_external_instance)
+			{
+				vkDestroyInstance(m_instance, m_allocatorCb);
+			}
+			m_external_instance = false;
 
 			bx::dlclose(m_vulkan1Dll);
 			m_vulkan1Dll  = NULL;
@@ -2400,13 +2461,14 @@ VK_IMPORT_DEVICE
 			bgfx::release(mem);
 		}
 
-		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/) override
+		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
 		{
+			m_textures[_handle.idx].overrideInternal(_ptr);
 		}
 
-		uintptr_t getInternal(TextureHandle /*_handle*/) override
+		uintptr_t getInternal(TextureHandle _handle) override
 		{
-			return 0;
+			return uintptr_t(m_textures[_handle.idx].m_textureImage.vk);
 		}
 
 		void destroyTexture(TextureHandle _handle) override
@@ -4616,6 +4678,9 @@ VK_IMPORT_DEVICE
 		uint8_t m_vsScratch[64<<10];
 
 		FrameBufferHandle m_fbh;
+
+		bool m_external_instance{ false };
+		bool m_external_logical_device{ false };
 	};
 
 	static RendererContextVK* s_renderVK;
@@ -6784,6 +6849,13 @@ VK_DESTROY
 		*_view = view;
 
 		return result;
+	}
+
+	void TextureVK::overrideInternal(uintptr_t _ptr)
+	{
+		destroy();
+		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
+		m_textureImage = VkImage(reinterpret_cast<::VkImage>(_ptr));
 	}
 
 	VkImageAspectFlags TextureVK::getAspectMask(VkFormat _format)

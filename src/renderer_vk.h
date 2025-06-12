@@ -700,6 +700,8 @@ VK_DESTROY_FUNC(DescriptorSet);
 
 		VkResult createView(uint32_t _layer, uint32_t _numLayers, uint32_t _mip, uint32_t _numMips, VkImageViewType _type, VkImageAspectFlags _aspectMask, bool _renderTarget, ::VkImageView* _view) const;
 
+		void overrideInternal(uintptr_t _ptr);
+
 		void*    m_directAccessPtr;
 		uint64_t m_flags;
 		uint32_t m_width;
