@@ -4604,8 +4604,8 @@ VK_IMPORT_DEVICE
 
 		VkAllocationCallbacks*   m_allocatorCb;
 		VkDebugReportCallbackEXT m_debugReportCallback;
-		VkInstance       m_instance;
-		VkPhysicalDevice m_physicalDevice;
+		VkInstance       m_instance{ NULL };
+		VkPhysicalDevice m_physicalDevice{ NULL };
 		uint32_t         m_instanceApiVersion;
 
 		VkPhysicalDeviceProperties       m_deviceProperties;
@@ -4632,7 +4632,7 @@ VK_IMPORT_DEVICE
 		CommandQueueVK  m_cmd;
 		VkCommandBuffer m_commandBuffer;
 
-		VkDevice m_device;
+		VkDevice m_device{ NULL };
 		uint32_t m_globalQueueFamily;
 		VkQueue  m_globalQueue;
 		VkDescriptorPool m_descriptorPool;
