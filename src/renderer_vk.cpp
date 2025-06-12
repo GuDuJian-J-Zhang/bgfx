@@ -4828,8 +4828,8 @@ VK_IMPORT_DEVICE
 
 		VkAllocationCallbacks*   m_allocatorCb;
 		VkDebugReportCallbackEXT m_debugReportCallback;
-		VkInstance       m_instance;
-		VkPhysicalDevice m_physicalDevice;
+		VkInstance       m_instance{ NULL };
+		VkPhysicalDevice m_physicalDevice{ NULL };
 		uint32_t         m_instanceApiVersion;
 
 		VkPhysicalDeviceFragmentShadingRatePropertiesKHR m_deviceShadingRateImageProperties;
@@ -4857,7 +4857,7 @@ VK_IMPORT_DEVICE
 		CommandQueueVK  m_cmd;
 		VkCommandBuffer m_commandBuffer;
 
-		VkDevice m_device;
+		VkDevice m_device{ NULL };
 		VkDevice m_externalDevice;
 		uint32_t m_globalQueueFamily;
 		VkQueue  m_globalQueue;
