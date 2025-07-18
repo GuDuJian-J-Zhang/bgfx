@@ -3355,9 +3355,9 @@ namespace bgfx { namespace gl
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createShader(ShaderHandle _handle, const Memory* _mem) override
+		void createShader(ShaderHandle _handle, const Memory* _mem, bool isBinaryCode, EShaderType tShaderType) override
 		{
-			m_shaders[_handle.idx].create(_mem);
+			m_shaders[_handle.idx].create(_mem, isBinaryCode, tShaderType);
 		}
 
 		void destroyShader(ShaderHandle _handle) override
@@ -6217,92 +6217,113 @@ namespace bgfx { namespace gl
 		bx::memCopy(_str, _insert, len);
 	}
 
-	void ShaderGL::create(const Memory* _mem)
+	void ShaderGL::create(const Memory* _mem, bool isBinaryCode, EShaderType tShaderType)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 		m_hash = bx::hash<bx::HashMurmur2A>(_mem->data, _mem->size);
 
 		bx::ErrorAssert err;
 
-		uint32_t magic;
-		bx::read(&reader, magic, &err);
-
-		if (isShaderType(magic, 'C') )
+		bx::StringView code;
+		if (isBinaryCode)
 		{
-			m_type = GL_COMPUTE_SHADER;
-		}
-		else if (isShaderType(magic, 'F') )
-		{
-			m_type = GL_FRAGMENT_SHADER;
-		}
-		else if (isShaderType(magic, 'V') )
-		{
-			m_type = GL_VERTEX_SHADER;
-		}
+			uint32_t magic;
+			bx::read(&reader, magic, &err);
 
-		uint32_t hashIn;
-		bx::read(&reader, hashIn, &err);
+			if (isShaderType(magic, 'C'))
+			{
+				m_type = GL_COMPUTE_SHADER;
+			}
+			else if (isShaderType(magic, 'F'))
+			{
+				m_type = GL_FRAGMENT_SHADER;
+			}
+			else if (isShaderType(magic, 'V'))
+			{
+				m_type = GL_VERTEX_SHADER;
+			}
 
-		uint32_t hashOut;
+			uint32_t hashIn;
+			bx::read(&reader, hashIn, &err);
 
-		if (isShaderVerLess(magic, 6) )
-		{
-			hashOut = hashIn;
+			uint32_t hashOut;
+
+			if (isShaderVerLess(magic, 6))
+			{
+				hashOut = hashIn;
+			}
+			else
+			{
+				bx::read(&reader, hashOut, &err);
+			}
+
+			uint16_t count;
+			bx::read(&reader, count, &err);
+
+			BX_TRACE("%s Shader consts %d"
+				, getShaderTypeName(magic)
+				, count
+			);
+
+			for (uint32_t ii = 0; ii < count; ++ii)
+			{
+				uint8_t nameSize = 0;
+				bx::read(&reader, nameSize, &err);
+
+				char name[256];
+				bx::read(&reader, &name, nameSize, &err);
+				name[nameSize] = '\0';
+
+				uint8_t type;
+				bx::read(&reader, type, &err);
+
+				uint8_t num;
+				bx::read(&reader, num, &err);
+
+				uint16_t regIndex;
+				bx::read(&reader, regIndex, &err);
+
+				uint16_t regCount;
+				bx::read(&reader, regCount, &err);
+
+				if (!isShaderVerLess(magic, 8))
+				{
+					uint16_t texInfo = 0;
+					bx::read(&reader, texInfo, &err);
+				}
+
+				if (!isShaderVerLess(magic, 10))
+				{
+					uint16_t texFormat = 0;
+					bx::read(&reader, texFormat, &err);
+				}
+			}
+
+			uint32_t shaderSize;
+			bx::read(&reader, shaderSize, &err);
+
+			code.set((const char*)reader.getDataPtr(), shaderSize);
 		}
 		else
 		{
-			bx::read(&reader, hashOut, &err);
-		}
-
-		uint16_t count;
-		bx::read(&reader, count, &err);
-
-		BX_TRACE("%s Shader consts %d"
-			, getShaderTypeName(magic)
-			, count
-			);
-
-		for (uint32_t ii = 0; ii < count; ++ii)
-		{
-			uint8_t nameSize = 0;
-			bx::read(&reader, nameSize, &err);
-
-			char name[256];
-			bx::read(&reader, &name, nameSize, &err);
-			name[nameSize] = '\0';
-
-			uint8_t type;
-			bx::read(&reader, type, &err);
-
-			uint8_t num;
-			bx::read(&reader, num, &err);
-
-			uint16_t regIndex;
-			bx::read(&reader, regIndex, &err);
-
-			uint16_t regCount;
-			bx::read(&reader, regCount, &err);
-
-			if (!isShaderVerLess(magic, 8) )
+			switch (tShaderType)
 			{
-				uint16_t texInfo = 0;
-				bx::read(&reader, texInfo, &err);
+			case EShaderType::Vertex:
+				m_type = GL_VERTEX_SHADER;
+				break;
+			case EShaderType::Fragment:
+				m_type = GL_FRAGMENT_SHADER;
+				break;
+			default:
+				BX_WARN(false, "Failed to create shader. Unknow shader type");
+				return;
 			}
 
-			if (!isShaderVerLess(magic, 10) )
-			{
-				uint16_t texFormat = 0;
-				bx::read(&reader, texFormat, &err);
-			}
+			code.set((const char*)_mem->data, _mem->size);
 		}
-
-		uint32_t shaderSize;
-		bx::read(&reader, shaderSize, &err);
 
 		m_id = glCreateShader(m_type);
 		BX_WARN(0 != m_id, "Failed to create shader.");
-
-		bx::StringView code( (const char*)reader.getDataPtr(), shaderSize);
 
 		if (0 != m_id)
 		{
@@ -6678,6 +6699,7 @@ namespace bgfx { namespace gl
 						, "#define lowp\n"
 						  "#define mediump\n"
 						  "#define highp\n"
+						  "#define precision\n"
 						, &err
 						);
 
@@ -6832,8 +6854,9 @@ namespace bgfx { namespace gl
 							, "#define lowp\n"
 							  "#define mediump\n"
 							  "#define highp\n"
+							  "#define precision\n"
 							, &err
-							);
+							); // for desktop no need to declare precision type ?
 					}
 
 					bx::write(&writer, code.getPtr(), code.getLength(), &err);

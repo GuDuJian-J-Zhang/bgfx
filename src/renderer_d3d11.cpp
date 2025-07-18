@@ -1806,7 +1806,7 @@ namespace bgfx { namespace d3d11
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createShader(ShaderHandle _handle, const Memory* _mem) override
+		void createShader(ShaderHandle _handle, const Memory* _mem, bool isBinaryCode, EShaderType tShaderType) override
 		{
 			m_shaders[_handle.idx].create(_mem);
 		}

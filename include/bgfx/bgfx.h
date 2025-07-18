@@ -419,6 +419,14 @@ namespace bgfx
 		 };
 	};
 
+	enum EShaderType: uint8_t
+	{
+		Vertex = 0,
+		Fragment,
+
+		Count
+	};
+
 	static const uint16_t kInvalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle)
@@ -2632,6 +2640,9 @@ namespace bgfx
 	/// @attention C99's equivalent binding is `bgfx_create_shader`.
 	///
 	ShaderHandle createShader(const Memory* _mem);
+
+	// create shader from raw code such as glsl
+	ShaderHandle createShader(const Memory* _mem, EShaderType type);
 
 	/// Returns the number of uniforms and uniform handles used inside a shader.
 	///

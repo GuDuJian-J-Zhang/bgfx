@@ -3088,7 +3088,7 @@ namespace bgfx
 		virtual void createDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _size, uint16_t _flags) = 0;
 		virtual void updateDynamicVertexBuffer(VertexBufferHandle _handle, uint32_t _offset, uint32_t _size, const Memory* _mem) = 0;
 		virtual void destroyDynamicVertexBuffer(VertexBufferHandle _handle) = 0;
-		virtual void createShader(ShaderHandle _handle, const Memory* _mem) = 0;
+		virtual void createShader(ShaderHandle _handle, const Memory* _mem, bool isBinaryCode, EShaderType tShaderType) = 0;
 		virtual void destroyShader(ShaderHandle _handle) = 0;
 		virtual void createProgram(ProgramHandle _handle, ShaderHandle _vsh, ShaderHandle _fsh) = 0;
 		virtual void destroyProgram(ProgramHandle _handle) = 0;
@@ -4248,6 +4248,61 @@ namespace bgfx
 			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
 			cmdbuf.write(handle);
 			cmdbuf.write(_mem);
+			cmdbuf.write(true); // is binary code
+			cmdbuf.write(EShaderType::Count);
+
+			setDebugNameForHandle(handle);
+
+			return handle;
+		}
+
+		BGFX_API_FUNC(ShaderHandle createShader(const Memory* _mem, EShaderType type))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			const uint32_t shaderHash = bx::hash<bx::HashMurmur2A>(_mem->data, _mem->size);
+			const uint16_t idx = m_shaderHashMap.find(shaderHash);
+			if (kInvalidHandle != idx)
+			{
+				ShaderHandle handle = { idx };
+				shaderIncRef(handle);
+				release(_mem);
+				return handle;
+			}
+
+			ShaderHandle handle = { m_shaderHandle.alloc() };
+
+			if (!isValid(handle))
+			{
+				BX_TRACE("Failed to allocate shader handle.");
+				release(_mem);
+				return BGFX_INVALID_HANDLE;
+			}
+
+			bool ok = m_shaderHashMap.insert(shaderHash, handle.idx);
+			BX_ASSERT(ok, "Shader already exists!"); BX_UNUSED(ok);
+
+			ShaderRef& sr = m_shaderRef[handle.idx];
+			sr.m_refCount = 1;
+			sr.m_hashIn = 0;
+			sr.m_hashOut = 0;
+			sr.m_num = 0;
+			sr.m_uniforms = NULL;
+
+			UniformHandle* uniforms = (UniformHandle*)BX_STACK_ALLOC(0 * sizeof(UniformHandle));
+
+			if (0 != sr.m_num)
+			{
+				uint32_t size = sr.m_num * sizeof(UniformHandle);
+				sr.m_uniforms = (UniformHandle*)bx::alloc(g_allocator, size);
+				bx::memCopy(sr.m_uniforms, uniforms, size);
+			}
+
+			CommandBuffer& cmdbuf = getCommandBuffer(CommandBuffer::CreateShader);
+			cmdbuf.write(handle);
+			cmdbuf.write(_mem);
+			cmdbuf.write(false); // not binary code
+			cmdbuf.write(type);
 
 			setDebugNameForHandle(handle);
 

@@ -3081,7 +3081,12 @@ namespace bgfx
 					const Memory* mem;
 					_cmdbuf.read(mem);
 
-					m_renderCtx->createShader(handle, mem);
+					bool isBinaryCode = false;
+					_cmdbuf.read(isBinaryCode);
+
+					EShaderType tShaderType = EShaderType::Count;
+					_cmdbuf.read(tShaderType);
+					m_renderCtx->createShader(handle, mem, isBinaryCode, tShaderType);
 
 					release(mem);
 				}
@@ -4381,6 +4386,12 @@ namespace bgfx
 	{
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
 		return s_ctx->createShader(_mem);
+	}
+
+	ShaderHandle createShader(const Memory* _mem, EShaderType shaderType)
+	{
+		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
+		return s_ctx->createShader(_mem, shaderType);
 	}
 
 	uint16_t getShaderUniforms(ShaderHandle _handle, UniformHandle* _uniforms, uint16_t _max)

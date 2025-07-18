@@ -148,7 +148,7 @@ namespace bgfx { namespace noop
 		{
 		}
 
-		void createShader(ShaderHandle /*_handle*/, const Memory* /*_mem*/) override
+		void createShader(ShaderHandle /*_handle*/, const Memory* /*_mem*/, bool isBinaryCode, EShaderType tShaderType) override
 		{
 		}
 

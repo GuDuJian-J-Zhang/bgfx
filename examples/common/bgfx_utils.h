@@ -24,7 +24,7 @@ void* load(const bx::FilePath& _filePath, uint32_t* _size = NULL);
 void unload(void* _ptr);
 
 ///
-bgfx::ShaderHandle loadShader(const bx::StringView& _name);
+bgfx::ShaderHandle loadShader(const bx::StringView& _name, bgfx::EShaderType shadetType);
 
 ///
 bgfx::ProgramHandle loadProgram(const bx::StringView& _vsName, const bx::StringView& _fsName);
