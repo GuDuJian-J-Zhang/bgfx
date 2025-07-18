@@ -39,7 +39,7 @@ void unload(void* _ptr);
 ///
 /// @returns Shader handle.
 ///
-bgfx::ShaderHandle loadShader(const bx::StringView& _name);
+bgfx::ShaderHandle loadShader(const bx::StringView& _name, bgfx::EShaderType shadetType);
 
 /// Load shader program from vertex and fragment shader files.
 ///

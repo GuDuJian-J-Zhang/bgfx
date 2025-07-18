@@ -1493,7 +1493,7 @@ namespace bgfx { namespace gl
 		{
 		}
 
-		void create(const Memory* _mem);
+		void create(const Memory* _mem, bool isBinaryCode, EShaderType tShaderType);
 		void destroy();
 
 		GLuint m_id;
