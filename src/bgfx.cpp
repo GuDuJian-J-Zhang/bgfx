@@ -4388,10 +4388,10 @@ namespace bgfx
 		return s_ctx->createShader(_mem);
 	}
 
-	ShaderHandle createShader(const Memory* _mem, EShaderType shaderType)
+	ShaderHandle createShader(const Memory* _mem, EShaderType _shaderType, const UniformDescription* _uniforms, uint16_t _uniformCount)
 	{
 		BX_ASSERT(NULL != _mem, "_mem can't be NULL");
-		return s_ctx->createShader(_mem, shaderType);
+		return s_ctx->createShader(_mem, _shaderType, _uniforms, _uniformCount);
 	}
 
 	uint16_t getShaderUniforms(ShaderHandle _handle, UniformHandle* _uniforms, uint16_t _max)

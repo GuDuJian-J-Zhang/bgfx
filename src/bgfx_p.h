@@ -4256,7 +4256,7 @@ namespace bgfx
 			return handle;
 		}
 
-		BGFX_API_FUNC(ShaderHandle createShader(const Memory* _mem, EShaderType type))
+		BGFX_API_FUNC(ShaderHandle createShader(const Memory* _mem, EShaderType _shaderType, const UniformDescription* _uniforms, uint16_t _uniformCount))
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
@@ -4289,7 +4289,17 @@ namespace bgfx
 			sr.m_num = 0;
 			sr.m_uniforms = NULL;
 
-			UniformHandle* uniforms = (UniformHandle*)BX_STACK_ALLOC(0 * sizeof(UniformHandle));
+			UniformHandle* uniforms = (UniformHandle*)BX_STACK_ALLOC(_uniformCount * sizeof(UniformHandle));
+
+			for (uint16_t i = 0; i < _uniformCount; ++i)
+			{
+				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(_uniforms[i].mName);
+		        if (PredefinedUniform::Count == predefined && UniformType::End != _uniforms[i].mType)
+		        {
+			        uniforms[sr.m_num] = createUniform(_uniforms[i].mName, UniformType::Enum(_uniforms[i].mType), _uniforms[i].mCount);
+			        sr.m_num++;
+		        }
+			}
 
 			if (0 != sr.m_num)
 			{
@@ -4302,7 +4312,7 @@ namespace bgfx
 			cmdbuf.write(handle);
 			cmdbuf.write(_mem);
 			cmdbuf.write(false); // not binary code
-			cmdbuf.write(type);
+			cmdbuf.write(_shaderType);
 
 			setDebugNameForHandle(handle);
 

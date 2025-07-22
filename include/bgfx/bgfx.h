@@ -427,6 +427,13 @@ namespace bgfx
 		Count
 	};
 
+	struct UniformDescription
+	{
+		const char* mName = nullptr;
+		UniformType::Enum mType{ UniformType::Enum::Count };
+		uint16_t mCount{ 0 };
+	};
+
 	static const uint16_t kInvalidHandle = UINT16_MAX;
 
 	BGFX_HANDLE(DynamicIndexBufferHandle)
@@ -2642,7 +2649,7 @@ namespace bgfx
 	ShaderHandle createShader(const Memory* _mem);
 
 	// create shader from raw code such as glsl
-	ShaderHandle createShader(const Memory* _mem, EShaderType type);
+	ShaderHandle createShader(const Memory* _mem, EShaderType _shaderType, const UniformDescription* _uniforms, uint16_t _uniformCount);
 
 	/// Returns the number of uniforms and uniform handles used inside a shader.
 	///
