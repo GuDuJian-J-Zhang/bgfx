@@ -1123,6 +1123,9 @@ namespace bgfx
 	{
 		"sampler1",
 		NULL,
+		"float",
+		"vec2",
+		"vec3",
 		"vec4",
 		"mat3",
 		"mat4",
@@ -1686,6 +1689,9 @@ namespace bgfx
 	{
 		sizeof(int32_t),
 		0,
+		sizeof(float),
+		2 * sizeof(float),
+		3 * sizeof(float),
 		4*sizeof(float),
 		3*3*sizeof(float),
 		4*4*sizeof(float),
