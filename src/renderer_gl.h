@@ -1187,11 +1187,49 @@ namespace bgfx { namespace gl
 	class UniformStateCache
 	{
 	public:
-		struct f4   { float val[ 4]; bool operator ==(const f4   &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1]; }};
+		struct f1 {
+			float val;
+			bool operator ==(const f1& rhs)
+			{
+				const uint32_t* a = (const uint32_t*)this;
+				const uint32_t* b = (const uint32_t*)&rhs;
+				return a[0] == b[0];
+			}
+		};
+		struct f2 {
+			float val[2];
+			bool operator ==(const f2& rhs)
+			{
+				const uint64_t* a = (const uint64_t*)this;
+				const uint64_t* b = (const uint64_t*)&rhs;
+				return a[0] == b[0];
+			}
+		};
+		struct f3 {
+			float val[3];
+			bool operator ==(const f3& rhs)
+			{
+				const uint64_t* a = (const uint64_t*)this;
+				const uint64_t* b = (const uint64_t*)&rhs;
+				return a[0] == b[0] && ((const uint32_t*)a)[2] == ((const uint32_t*)b)[2];
+			}
+		};
+		struct f4   {
+			float val[ 4];
+			bool operator ==(const f4   &rhs)
+			{
+				const uint64_t *a = (const uint64_t *)this;
+				const uint64_t *b = (const uint64_t *)&rhs;
+				return a[0] == b[0] && a[1] == b[1];
+			}
+		};
 		struct f3x3 { float val[ 9]; bool operator ==(const f3x3 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && ((const uint32_t*)a)[8] == ((const uint32_t*)b)[8]; }};
 		struct f4x4 { float val[16]; bool operator ==(const f4x4 &rhs) { const uint64_t *a = (const uint64_t *)this; const uint64_t *b = (const uint64_t *)&rhs; return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && a[4] == b[4] && a[5] == b[5] && a[6] == b[6] && a[7] == b[7]; }};
 
 		typedef stl::unordered_map<uint64_t, int>  IMap;
+		typedef stl::unordered_map<uint64_t, f1>   F1Map;
+		typedef stl::unordered_map<uint64_t, f2>   F2Map;
+		typedef stl::unordered_map<uint64_t, f3>   F3Map;
 		typedef stl::unordered_map<uint64_t, f4>   F4Map;
 		typedef stl::unordered_map<uint64_t, f3x3> F3x3Map;
 		typedef stl::unordered_map<uint64_t, f4x4> F4x4Map;
@@ -1246,6 +1284,9 @@ namespace bgfx { namespace gl
 		GLuint m_currentProgram;
 
 		IMap    m_uniformiCacheMap;
+		F1Map   m_uniformf1CacheMap;
+		F2Map   m_uniformf2CacheMap;
+		F3Map   m_uniformf3CacheMap;
 		F4Map   m_uniformf4CacheMap;
 		F3x3Map m_uniformf3x3CacheMap;
 		F4x4Map m_uniformf4x4CacheMap;
@@ -1256,6 +1297,15 @@ namespace bgfx { namespace gl
 
 	template<>
 	inline UniformStateCache::IMap& UniformStateCache::getUniformCache() { return m_uniformiCacheMap; }
+
+	template<>
+	inline UniformStateCache::F1Map& UniformStateCache::getUniformCache() { return m_uniformf1CacheMap; }
+
+	template<>
+	inline UniformStateCache::F2Map& UniformStateCache::getUniformCache() { return m_uniformf2CacheMap; }
+
+	template<>
+	inline UniformStateCache::F3Map& UniformStateCache::getUniformCache() { return m_uniformf3CacheMap; }
 
 	template<>
 	inline UniformStateCache::F4Map& UniformStateCache::getUniformCache() { return m_uniformf4CacheMap; }

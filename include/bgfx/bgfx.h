@@ -276,6 +276,9 @@ namespace bgfx
 			Sampler, //!< Sampler.
 			End,     //!< Reserved, do not use.
 
+			Float,   //!< float
+			Vec2,    //!< 2 floats vector
+			Vec3,    //!< 3 floats vector
 			Vec4,    //!< 4 floats vector.
 			Mat3,    //!< 3x3 matrix.
 			Mat4,    //!< 4x4 matrix.

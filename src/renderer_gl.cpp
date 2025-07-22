@@ -4472,7 +4472,15 @@ namespace bgfx { namespace gl
 				case UniformType::Sampler:
 					setUniform1iv(loc, num, (int32_t*)data);
 					break;
-
+				case UniformType::Float:
+					setUniform1fv(loc, num, (float*)data);
+					break;
+				case UniformType::Vec2:
+					setUniform2fv(loc, num, (float*)data);
+					break;
+				case UniformType::Vec3:
+					setUniform3fv(loc, num, (float*)data);
+					break;
 				case UniformType::Vec4:
 					setUniform4fv(loc, num, (float*)data);
 					break;
@@ -4689,6 +4697,54 @@ namespace bgfx { namespace gl
 			if (changed)
 			{
 				GL_CHECK(glUniform1iv(loc, num, data) );
+			}
+		}
+
+		void setUniform1fv(uint32_t loc, int num, const float* data)
+		{
+			bool changed = false;
+			for (int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc + i, *(const UniformStateCache::f1*)&data[i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniform1fv(loc, num, data));
+			}
+		}
+
+		void setUniform2fv(uint32_t loc, int num, const float* data)
+		{
+			bool changed = false;
+			for (int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc + i, *(const UniformStateCache::f2*)&data[2 * i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniform2fv(loc, num, data));
+			}
+		}
+
+		void setUniform3fv(uint32_t loc, int num, const float* data)
+		{
+			bool changed = false;
+			for (int i = 0; i < num; ++i)
+			{
+				if (m_uniformStateCache.updateUniformCache(loc + i, *(const UniformStateCache::f3*)&data[3 * i]))
+				{
+					changed = true;
+				}
+			}
+			if (changed)
+			{
+				GL_CHECK(glUniform3fv(loc, num, data));
 			}
 		}
 
@@ -4964,10 +5020,15 @@ namespace bgfx { namespace gl
 		case GL_INT:
 		case GL_UNSIGNED_INT:
 			return UniformType::Sampler;
-
 		case GL_FLOAT:
+			return UniformType::Float;
+
 		case GL_FLOAT_VEC2:
+			return UniformType::Vec2;
+
 		case GL_FLOAT_VEC3:
+			return UniformType::Vec3;
+
 		case GL_FLOAT_VEC4:
 			return UniformType::Vec4;
 

@@ -280,9 +280,12 @@ typedef enum bgfx_uniform_type
 {
     BGFX_UNIFORM_TYPE_SAMPLER,                /** ( 0) Sampler.                       */
     BGFX_UNIFORM_TYPE_END,                    /** ( 1) Reserved, do not use.          */
-    BGFX_UNIFORM_TYPE_VEC4,                   /** ( 2) 4 floats vector.               */
-    BGFX_UNIFORM_TYPE_MAT3,                   /** ( 3) 3x3 matrix.                    */
-    BGFX_UNIFORM_TYPE_MAT4,                   /** ( 4) 4x4 matrix.                    */
+    BGFX_UNIFORM_TYPE_FLOAT,                  /** ( 2) float.                         */
+    BGFX_UNIFORM_TYPE_VEC2,                   /** ( 3) 2 floats vector.               */
+    BGFX_UNIFORM_TYPE_VEC3,                   /** ( 4) 3 floats vector.               */
+    BGFX_UNIFORM_TYPE_VEC4,                   /** ( 5) 4 floats vector.               */
+    BGFX_UNIFORM_TYPE_MAT3,                   /** ( 6) 3x3 matrix.                    */
+    BGFX_UNIFORM_TYPE_MAT4,                   /** ( 7) 4x4 matrix.                    */
 
     BGFX_UNIFORM_TYPE_COUNT
 
