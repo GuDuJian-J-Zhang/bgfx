@@ -5285,14 +5285,14 @@ namespace bgfx { namespace gl
 			num = bx::uint32_max(num, 1);
 
 			int32_t offset = 0;
-			const bx::StringView array = bx::strFind(name, '[');
+			/*const bx::StringView array = bx::strFind(name, '[');
 			if (!array.isEmpty() )
 			{
 				name[array.getPtr() - name] = '\0';
 				BX_TRACE("--- %s", name);
 				const bx::StringView end = bx::strFind(array.getPtr()+1, ']');
 				bx::fromString(&offset, bx::StringView(array.getPtr()+1, end.getPtr() ) );
-			}
+			}*/
 
 			switch (gltype)
 			{

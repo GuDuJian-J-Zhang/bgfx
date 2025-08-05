@@ -4293,10 +4293,10 @@ namespace bgfx
 
 			for (uint16_t i = 0; i < _uniformCount; ++i)
 			{
-				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(_uniforms[i].mName);
+				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(_uniforms[i].mName.c_str());
 		        if (PredefinedUniform::Count == predefined && UniformType::End != _uniforms[i].mType)
 		        {
-			        uniforms[sr.m_num] = createUniform(_uniforms[i].mName, UniformType::Enum(_uniforms[i].mType), _uniforms[i].mCount);
+			        uniforms[sr.m_num] = createUniform(_uniforms[i].mName.c_str(), UniformType::Enum(_uniforms[i].mType), _uniforms[i].mCount);
 			        sr.m_num++;
 		        }
 			}

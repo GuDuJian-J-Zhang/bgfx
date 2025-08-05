@@ -4828,7 +4828,7 @@ namespace bgfx
 			; ++ptr
 			)
 		{
-			result &= bx::isAlphaNum(*ptr) || '_' == *ptr;
+			result &= bx::isAlphaNum(*ptr) || '_' == *ptr || '[' == *ptr || ']' == *ptr || '.' == *ptr;
 		}
 
 		BGFX_ERROR_CHECK(false

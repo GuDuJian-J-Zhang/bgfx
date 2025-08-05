@@ -11,6 +11,7 @@
 #include <stdarg.h> // va_list
 #include <stdint.h> // uint32_t
 #include <stdlib.h> // NULL
+#include <string>
 
 #include "defines.h"
 
@@ -432,7 +433,7 @@ namespace bgfx
 
 	struct UniformDescription
 	{
-		const char* mName = nullptr;
+		const std::string mName{};
 		UniformType::Enum mType{ UniformType::Enum::Count };
 		uint16_t mCount{ 0 };
 	};
