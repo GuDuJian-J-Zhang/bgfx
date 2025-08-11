@@ -8139,7 +8139,8 @@ namespace bgfx { namespace gl
 						if ( (BGFX_STATE_PT_POINTS|BGFX_STATE_POINT_SIZE_MASK) & changedFlags)
 						{
 							float pointSize = (float)(bx::max(1, (newFlags&BGFX_STATE_POINT_SIZE_MASK)>>BGFX_STATE_POINT_SIZE_SHIFT) );
-							GL_CHECK(glPointSize(pointSize) );
+							//GL_CHECK(glPointSize(pointSize) );
+							GL_CHECK(glEnable(GL_PROGRAM_POINT_SIZE));
 						}
 
 						if (BGFX_STATE_MSAA & changedFlags)
