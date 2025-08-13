@@ -5741,8 +5741,7 @@ namespace bgfx { namespace gl
 			msaaQuality = bx::min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
 			const bool msaaSample = 0 != (m_flags&BGFX_TEXTURE_MSAA_SAMPLE);
 
-			if (!msaaSample
-			&& (0 != msaaQuality || writeOnly)
+			if ((0 != msaaQuality || writeOnly)
 			&&  !textureArray)
 			{
 				GL_CHECK(glGenRenderbuffers(1, &m_rbo) );
@@ -5812,7 +5811,7 @@ namespace bgfx { namespace gl
 			msaaQuality = bx::satSub<uint32_t>(msaaQuality, 1u);
 			msaaQuality = bx::min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
 
-			GLenum target = msaaSample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+			GLenum target = /*msaaSample ? GL_TEXTURE_2D_MULTISAMPLE :*/ GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)
 			{
 				target = GL_TEXTURE_CUBE_MAP;
