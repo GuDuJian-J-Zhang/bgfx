@@ -1283,9 +1283,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_vertexBuffers[_handle.idx].destroy();
 		}
 
-		void createShader(ShaderHandle _handle, const Memory* _mem) override
+		void createShader(ShaderHandle _handle, const Memory* _mem, bool isBinaryCode, EShaderType tShaderType) override
 		{
-			m_shaders[_handle.idx].create(_mem);
+			m_shaders[_handle.idx].create(_mem, isBinaryCode, tShaderType);
 		}
 
 		void destroyShader(ShaderHandle _handle) override
@@ -3143,107 +3143,154 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		bx::write(_writer, _str, (int32_t)bx::strLen(_str), bx::ErrorAssert{});
 	}
 
-	void ShaderMtl::create(const Memory* _mem)
+	void ShaderMtl::create(const Memory* _mem, bool isBinaryCode, EShaderType tShaderType)
 	{
 		bx::MemoryReader reader(_mem->data, _mem->size);
 
 		bx::ErrorAssert err;
 
-		uint32_t magic;
-		bx::read(&reader, magic, &err);
-
-		uint32_t hashIn;
-		bx::read(&reader, hashIn, &err);
-
-		uint32_t hashOut;
-
-		if (isShaderVerLess(magic, 6) )
+		bx::StringView code;
+        if (isBinaryCode)
 		{
-			hashOut = hashIn;
+
+		    uint32_t magic;
+		    bx::read(&reader, magic, &err);
+
+		    uint32_t hashIn;
+		    bx::read(&reader, hashIn, &err);
+
+		    uint32_t hashOut;
+
+		    if (isShaderVerLess(magic, 6) )
+		    {
+		    	hashOut = hashIn;
+		    }
+		    else
+		    {
+		    	bx::read(&reader, hashOut, &err);
+		    }
+
+		    uint16_t count;
+		    bx::read(&reader, count, &err);
+
+		    BX_TRACE("%s Shader consts %d"
+		    	, getShaderTypeName(magic)
+		    	, count
+		    	);
+
+		    for (uint32_t ii = 0; ii < count; ++ii)
+		    {
+		    	uint8_t nameSize;
+		    	bx::read(&reader, nameSize, &err);
+
+		    	char name[256];
+		    	bx::read(&reader, &name, nameSize, &err);
+		    	name[nameSize] = '\0';
+
+		    	uint8_t type;
+		    	bx::read(&reader, type, &err);
+
+		    	uint8_t num;
+		    	bx::read(&reader, num, &err);
+
+		    	uint16_t regIndex;
+		    	bx::read(&reader, regIndex, &err);
+
+		    	uint16_t regCount;
+		    	bx::read(&reader, regCount, &err);
+
+		    	if (!isShaderVerLess(magic, 8) )
+		    	{
+		    		uint16_t texInfo = 0;
+		    		bx::read(&reader, texInfo, &err);
+		    	}
+
+		    	if (!isShaderVerLess(magic, 10) )
+		    	{
+		    		uint16_t texFormat = 0;
+		    		bx::read(&reader, texFormat, &err);
+		    	}
+		    }
+    
+		    if (isShaderType(magic, 'C') )
+		    {
+		    	for (uint32_t ii = 0; ii < 3; ++ii)
+		    	{
+		    		bx::read(&reader, m_numThreads[ii], &err);
+		    	}
+		    }
+    
+		    uint32_t shaderSize;
+		    bx::read(&reader, shaderSize, &err);
+
+		    code.set((const char*)reader.getPtr(), shaderSize);
+		    bx::skip(&reader, shaderSize+1);
+
+		    MTL::Library* lib = newLibraryWithSource(s_renderMtl->m_device, code);
+
+		    if (NULL != lib)
+		    {
+		    	m_function = lib->newFunction(nsstr(SHADER_FUNCTION_NAME) );
+		    	MTL_RELEASE_W(lib, 0);
+		    }
+
+		    BGFX_FATAL(NULL != m_function
+		    	, bgfx::Fatal::InvalidShader
+		    	, "Failed to create %s shader."
+		    	, getShaderTypeName(magic)
+		    	);
+
+		    bx::HashMurmur2A murmur;
+		    murmur.begin();
+		    murmur.add(hashIn);
+		    murmur.add(hashOut);
+		    murmur.add(code.getPtr(), shaderSize);
+//		    murmur.add(numAttrs);
+//		    murmur.add(m_attrMask, numAttrs);
+		    m_hash = murmur.end();
 		}
 		else
 		{
-			bx::read(&reader, hashOut, &err);
+			uint32_t shaderSize = _mem->size;
+            code.set((const char*)_mem->data, _mem->size);
+            
+            MTL::Library* lib = newLibraryWithSource(s_renderMtl->m_device, code);
+
+            if (NULL != lib)
+            {
+                m_function = lib->newFunction(nsstr(SHADER_FUNCTION_NAME) );
+		    	MTL_RELEASE_W(lib, 0);
+            }
+            
+            bx::StringView shaderType;
+            switch (tShaderType)
+            {
+            case EShaderType::Vertex:
+                shaderType = "Vertex";
+                break;
+            case EShaderType::Fragment:
+                shaderType = "Fragment";
+                break;
+            default:
+                BX_WARN(false, "Failed to create shader. Unknow shader type");
+                return;
+            }
+            
+            BGFX_FATAL(NULL != m_function
+                , bgfx::Fatal::InvalidShader
+                , "Failed to create %s shader."
+                , shaderType.getPtr()
+                );
+            
+            bx::HashMurmur2A murmur;
+            murmur.begin();
+            murmur.add(0);
+            murmur.add(0);
+            murmur.add(code.getPtr(), shaderSize);
+    //        murmur.add(numAttrs);
+    //        murmur.add(m_attrMask, numAttrs);
+            m_hash = murmur.end();
 		}
-
-		uint16_t count;
-		bx::read(&reader, count, &err);
-
-		BX_TRACE("%s Shader consts %d"
-			, getShaderTypeName(magic)
-			, count
-			);
-
-		for (uint32_t ii = 0; ii < count; ++ii)
-		{
-			uint8_t nameSize;
-			bx::read(&reader, nameSize, &err);
-
-			char name[256];
-			bx::read(&reader, &name, nameSize, &err);
-			name[nameSize] = '\0';
-
-			uint8_t type;
-			bx::read(&reader, type, &err);
-
-			uint8_t num;
-			bx::read(&reader, num, &err);
-
-			uint16_t regIndex;
-			bx::read(&reader, regIndex, &err);
-
-			uint16_t regCount;
-			bx::read(&reader, regCount, &err);
-
-			if (!isShaderVerLess(magic, 8) )
-			{
-				uint16_t texInfo = 0;
-				bx::read(&reader, texInfo, &err);
-			}
-
-			if (!isShaderVerLess(magic, 10) )
-			{
-				uint16_t texFormat = 0;
-				bx::read(&reader, texFormat, &err);
-			}
-		}
-
-		if (isShaderType(magic, 'C') )
-		{
-			for (uint32_t ii = 0; ii < 3; ++ii)
-			{
-				bx::read(&reader, m_numThreads[ii], &err);
-			}
-		}
-
-		uint32_t shaderSize;
-		bx::read(&reader, shaderSize, &err);
-
-		const char* code = (const char*)reader.getDataPtr();
-		bx::skip(&reader, shaderSize+1);
-
-		MTL::Library* lib = newLibraryWithSource(s_renderMtl->m_device, code);
-
-		if (NULL != lib)
-		{
-			m_function = lib->newFunction(nsstr(SHADER_FUNCTION_NAME) );
-			MTL_RELEASE_W(lib, 0);
-		}
-
-		BGFX_FATAL(NULL != m_function
-			, bgfx::Fatal::InvalidShader
-			, "Failed to create %s shader."
-			, getShaderTypeName(magic)
-			);
-
-		bx::HashMurmur2A murmur;
-		murmur.begin();
-		murmur.add(hashIn);
-		murmur.add(hashOut);
-		murmur.add(code, shaderSize);
-//		murmur.add(numAttrs);
-//		murmur.add(m_attrMask, numAttrs);
-		m_hash = murmur.end();
 	}
 
 	void ProgramMtl::create(const ShaderMtl* _vsh, const ShaderMtl* _fsh)
