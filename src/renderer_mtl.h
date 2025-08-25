@@ -858,7 +858,7 @@ namespace bgfx { namespace mtl
 		{
 		}
 
-		void create(const Memory* _mem);
+		void create(const Memory* _mem, bool isBinaryCode, EShaderType tShaderType);
 		void destroy()
 		{
 			MTL_RELEASE(m_function);
