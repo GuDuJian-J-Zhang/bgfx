@@ -6857,7 +6857,7 @@ namespace bgfx { namespace gl
 					}
 					else
 					{
-						bx::write(&writer, "#version 140\n", &err);
+						bx::write(&writer, "#version 150\n", &err);
 					}
 
 					bx::write(&writer
