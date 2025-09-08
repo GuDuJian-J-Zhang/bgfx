@@ -177,10 +177,11 @@ namespace entry
 
 			int32_t x = location.x;
 			int32_t y = int32_t(adjustFrame.size.height) - int32_t(location.y);
+            CGFloat scale = [m_window[0] backingScaleFactor];
 
 			// clamp within the range of the window
-			*outX = bx::clamp(x, 0, int32_t(adjustFrame.size.width) );
-			*outY = bx::clamp(y, 0, int32_t(adjustFrame.size.height) );
+			*outX = bx::clamp(x * scale, 0, int32_t(scale * adjustFrame.size.width) );
+			*outY = bx::clamp(y * scale, 0, int32_t(scale * adjustFrame.size.height) );
 		}
 
 		void setMousePos(NSWindow* _window, int _x, int _y)
@@ -423,8 +424,9 @@ namespace entry
 			WindowHandle handle = findHandle(window);
 			NSRect originalFrame = [window frame];
 			NSRect rect = [window contentRectForFrameRect: originalFrame];
-			uint32_t width  = uint32_t(rect.size.width);
-			uint32_t height = uint32_t(rect.size.height);
+			CGFloat scale = [m_window[0] backingScaleFactor];
+			uint32_t width  = uint32_t(scale * rect.size.width);
+			uint32_t height = uint32_t(scale * rect.size.height);
 			m_eventQueue.postSizeEvent(handle, width, height);
 
 			// Make sure mouse button state is 'up' after resize.
@@ -504,8 +506,9 @@ namespace entry
 
 			WindowHandle handle = { 0 };
 			NSRect contentRect = [m_window[0] contentRectForFrameRect: m_windowFrame];
-			uint32_t width = uint32_t(contentRect.size.width);
-			uint32_t height = uint32_t(contentRect.size.height);
+            CGFloat scale = [m_window[0] backingScaleFactor];
+			uint32_t width = uint32_t(scale * contentRect.size.width);
+			uint32_t height = uint32_t(scale * contentRect.size.height);
 			m_eventQueue.postSizeEvent(handle, width, height);
 
 			while (!(m_exit = [dg applicationHasTerminated]) )
