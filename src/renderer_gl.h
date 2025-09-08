@@ -21,9 +21,14 @@
 	|| BX_PLATFORM_WINDOWS                              \
 	) )
 
+#define BGFX_USE_CGL (BGFX_CONFIG_RENDERER_OPENGL && (0 \
+	|| BX_PLATFORM_OSX                              \
+	) )
+
 #define BGFX_USE_GL_DYNAMIC_LIB (0 \
 	|| BX_PLATFORM_LINUX           \
 	|| BX_PLATFORM_WINDOWS         \
+    || BX_PLATFORM_OSX        \
 	)
 
 // Keep a state cache of GL uniform values to avoid redundant uploads
@@ -58,6 +63,9 @@
 
 #if BGFX_CONFIG_RENDERER_OPENGL
 #	if BGFX_CONFIG_RENDERER_OPENGL >= 31
+#       if BX_PLATFORM_OSX
+#           define GL_GLEXT_PROTOTYPES 1
+#       endif
 #		include <gl/glcorearb.h>
 #	else
 #		if BX_PLATFORM_LINUX
@@ -1133,6 +1141,8 @@ typedef uint64_t GLuint64;
 #	include "glcontext_html5.h"
 #elif BGFX_USE_WGL
 #	include "glcontext_wgl.h"
+#elif BGFX_USE_CGL
+#    include "glcontext_cgl.h"
 #endif // BGFX_USE_*
 
 #ifndef GL_APIENTRY
