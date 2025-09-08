@@ -4,4 +4,5 @@
  */
 
 #include "amalgamated.cpp"
+#include "glcontext_cgl.mm"
 #include "renderer_mtl.mm"
