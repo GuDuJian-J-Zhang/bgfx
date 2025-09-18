@@ -18,6 +18,7 @@
 #include <stdint.h> // uint32_t
 #include <stdlib.h> // NULL
 #include <string>
+#include <functional>
 
 #include "defines.h"
 
@@ -1943,6 +1944,16 @@ namespace bgfx
 		  void* _ptr
 		, void* _userData
 		);
+
+	using GPUPickingCallback = std::function<void(bool)>;
+
+	struct GPUPickingData
+	{
+		FrameBufferHandle mHandle{ bgfx::kInvalidHandle };
+		uint8_t* mpColorData{ nullptr };
+		uint8_t* mpDepthData{ nullptr };
+		GPUPickingCallback mCB{ nullptr };
+	};
 
 	/// Pack vertex attribute into vertex stream format.
 	///
@@ -4690,6 +4701,25 @@ namespace bgfx
 		, uint16_t _height = UINT16_MAX
 		, uint16_t _depth = UINT16_MAX
 		);
+
+	/// Request screen shot of window back buffer.
+	///
+	/// @param[in] _handle Frame buffer handle. If handle is `BGFX_INVALID_HANDLE` request will be
+	///   made for main window back buffer.
+	/// @param[in] _filePath Will be passed to `bgfx::CallbackI::screenShot` callback.
+	///
+	/// @remarks
+	///   `bgfx::CallbackI::screenShot` must be implemented.
+	///
+	/// @attention Frame buffer handle must be created with OS' target native window handle.
+	/// @attention C99's equivalent binding is `bgfx_request_screen_shot`.
+	///
+	void requestScreenShot(
+		  FrameBufferHandle _handle
+		, const char* _filePath
+		);
+
+	void setGPUPickingData(const GPUPickingData& _data);
 
 } // namespace bgfx
 
