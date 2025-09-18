@@ -2116,6 +2116,10 @@ namespace bgfx { namespace d3d12
 		{
 		}
 
+		void setScreenCaptureData(const ScreenCaptureData& /*_data*/) override
+		{
+		}
+
 		void updateViewName(ViewId _id, const char* _name) override
 		{
 			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]

@@ -2493,6 +2493,11 @@ namespace bgfx
 					{
 						m_renderCtx->setGPUPickingData(m_render->m_gpuPickingData);
 					}
+
+					if (m_render->m_screenCaptureData.mpPixelData)
+					{
+						m_renderCtx->setScreenCaptureData(m_render->m_screenCaptureData);
+					}
 				}
 			}
 
@@ -5618,6 +5623,12 @@ namespace bgfx
 	{
 		BGFX_CHECK_API_THREAD();
 		s_ctx->setGPUPickingData(_data);
+	}
+
+	void setScreenCaptureData(const ScreenCaptureData& _data)
+	{
+		BGFX_CHECK_API_THREAD();
+		s_ctx->setScreenCaptureData(_data);
 	}
 
 #undef BGFX_CHECK_ENCODER0

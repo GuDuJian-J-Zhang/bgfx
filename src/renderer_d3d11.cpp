@@ -2062,6 +2062,10 @@ namespace bgfx { namespace d3d11
 		{
 		}
 
+		void setScreenCaptureData(const ScreenCaptureData& /*_data*/) override
+		{
+		}
+
 		void updateViewName(ViewId _id, const char* _name) override
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )

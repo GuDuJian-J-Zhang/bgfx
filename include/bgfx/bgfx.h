@@ -1891,13 +1891,20 @@ namespace bgfx
 	};
 
 	using GPUPickingCallback = std::function<void(bool)>;
-
 	struct GPUPickingData
 	{
 		FrameBufferHandle mHandle{ bgfx::kInvalidHandle };
 		uint8_t* mpColorData{ nullptr };
 		uint8_t* mpDepthData{ nullptr };
 		GPUPickingCallback mCB{ nullptr };
+	};
+
+	using ScreenCaptureCallback = std::function<void(bool)>;
+	struct ScreenCaptureData
+	{
+		FrameBufferHandle mHandle{ bgfx::kInvalidHandle };
+		uint8_t* mpPixelData{ nullptr };
+		ScreenCaptureCallback mCB{ nullptr };
 	};
 
 	/// Pack vertex attribute into vertex stream format.
@@ -4310,6 +4317,8 @@ namespace bgfx
 		);
 
 	void setGPUPickingData(const GPUPickingData& _data);
+
+	void setScreenCaptureData(const ScreenCaptureData& _data);
 
 } // namespace bgfx
 

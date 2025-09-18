@@ -2367,6 +2367,7 @@ namespace bgfx
 		uint8_t m_numScreenShots;
 
 		GPUPickingData m_gpuPickingData;
+		ScreenCaptureData m_screenCaptureData;
 
 		CommandBuffer m_cmdPre;
 		CommandBuffer m_cmdPost;
@@ -3110,6 +3111,7 @@ namespace bgfx
 		virtual void destroyUniform(UniformHandle _handle) = 0;
 		virtual void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
 		virtual void setGPUPickingData(const GPUPickingData& _data) = 0;
+		virtual void setScreenCaptureData(const ScreenCaptureData& _data) = 0;
 		virtual void updateViewName(ViewId _id, const char* _name) = 0;
 		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
@@ -5162,6 +5164,13 @@ namespace bgfx
 			BGFX_CHECK_HANDLE_INVALID_OK("setGPUPickingData", m_frameBufferHandle, _data.mHandle);
 
 			m_submit->m_gpuPickingData = _data;
+		}
+
+		BGFX_API_FUNC(void setScreenCaptureData(const ScreenCaptureData& _data))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			m_submit->m_screenCaptureData = _data;
 		}
 
 		BGFX_API_FUNC(void setPaletteColor(uint8_t _index, const float _rgba[4]) )
