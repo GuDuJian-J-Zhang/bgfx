@@ -4,6 +4,7 @@
  */
 
 #include "bgfx_p.h"
+#if BX_PLATFORM_OSX
 #include <Cocoa/Cocoa.h>
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLTypes.h>
@@ -233,3 +234,4 @@ namespace bgfx { namespace gl
 
 #	endif // BGFX_USE_CGL
 #endif // (BGFX_CONFIG_RENDERER_OPENGLES || BGFX_CONFIG_RENDERER_OPENGL)
+#endif
