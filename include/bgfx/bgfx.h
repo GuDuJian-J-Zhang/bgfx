@@ -12,6 +12,7 @@
 #include <stdint.h> // uint32_t
 #include <stdlib.h> // NULL
 #include <string>
+#include <functional>
 
 #include "defines.h"
 
@@ -1887,6 +1888,16 @@ namespace bgfx
 		uint16_t m_stride;                    //!< Stride.
 		uint16_t m_offset[Attrib::Count];     //!< Attribute offsets.
 		uint16_t m_attributes[Attrib::Count]; //!< Used attributes.
+	};
+
+	using GPUPickingCallback = std::function<void(bool)>;
+
+	struct GPUPickingData
+	{
+		FrameBufferHandle mHandle{ bgfx::kInvalidHandle };
+		uint8_t* mpColorData{ nullptr };
+		uint8_t* mpDepthData{ nullptr };
+		GPUPickingCallback mCB{ nullptr };
 	};
 
 	/// Pack vertex attribute into vertex stream format.
@@ -4297,6 +4308,8 @@ namespace bgfx
 		  FrameBufferHandle _handle
 		, const char* _filePath
 		);
+
+	void setGPUPickingData(const GPUPickingData& _data);
 
 } // namespace bgfx
 

@@ -226,6 +226,11 @@ namespace bgfx { namespace noop
 		{
 		}
 
+		void setGPUPickingData(const GPUPickingData& /*_data*/) override
+		{
+
+		}
+
 		void updateViewName(ViewId /*_id*/, const char* /*_name*/) override
 		{
 		}

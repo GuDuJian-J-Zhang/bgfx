@@ -2058,6 +2058,10 @@ namespace bgfx { namespace d3d11
 			DX_RELEASE(backBuffer, 0);
 		}
 
+		void setGPUPickingData(const GPUPickingData& /*_data*/) override
+		{
+		}
+
 		void updateViewName(ViewId _id, const char* _name) override
 		{
 			if (BX_ENABLED(BGFX_CONFIG_DEBUG_ANNOTATION) )

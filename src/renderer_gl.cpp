@@ -3606,6 +3606,75 @@ namespace bgfx { namespace gl
 			bx::free(g_allocator, data);
 		}
 
+		void setGPUPickingData(const GPUPickingData& _data) override
+		{
+			bool rt = false;
+			const FrameBufferGL& frameBuffer = m_frameBuffers[_data.mHandle.idx];
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]));
+			if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+			{
+				rt = false;
+			}
+			else
+			{
+				if (_data.mpColorData != nullptr)
+				{
+					const auto& colorAttachment = frameBuffer.m_attachment[0];
+					if (isValid(colorAttachment.handle))
+					{
+						const auto& colorTexture = m_textures[colorAttachment.handle.idx];
+						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0));
+						GL_CHECK(glReadPixels(
+							0
+							, 0
+							, frameBuffer.m_width
+							, frameBuffer.m_height
+							, colorTexture.m_fmt
+							, colorTexture.m_type
+							, _data.mpColorData
+						));
+						rt = true;
+						GL_CHECK(glReadBuffer(0));
+					}
+				}
+				if (_data.mpDepthData != nullptr)
+				{
+					const auto& depthAttachment = frameBuffer.m_attachment[1];
+					if (isValid(depthAttachment.handle))
+					{
+						const auto& depthTexture = m_textures[depthAttachment.handle.idx];
+						bimg::TextureFormat::Enum format = bimg::TextureFormat::Enum(depthTexture.m_textureFormat);
+						if (bimg::isDepth(format))
+						{
+							GL_CHECK(glReadPixels(
+								0
+								, 0
+								, frameBuffer.m_width
+								, frameBuffer.m_height
+								, depthTexture.m_fmt
+								, depthTexture.m_type
+								, _data.mpDepthData
+							));
+							rt = true;
+						}
+						else
+						{
+							rt = false;
+						}
+					}
+					else
+					{
+						rt = false;
+					}
+				}
+			}
+			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+			if (_data.mCB)
+			{
+				_data.mCB(rt);
+			}
+		}
+
 		void updateViewName(ViewId _id, const char* _name) override
 		{
 			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
