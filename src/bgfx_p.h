@@ -2366,6 +2366,9 @@ namespace bgfx
 		ScreenShot m_screenShot[BGFX_CONFIG_MAX_SCREENSHOTS];
 		uint8_t m_numScreenShots;
 
+		GPUPickingData m_gpuPickingData;
+		ScreenCaptureData m_screenCaptureData;
+
 		CommandBuffer m_cmdPre;
 		CommandBuffer m_cmdPost;
 
@@ -3107,6 +3110,8 @@ namespace bgfx
 		virtual void createUniform(UniformHandle _handle, UniformType::Enum _type, uint16_t _num, const char* _name) = 0;
 		virtual void destroyUniform(UniformHandle _handle) = 0;
 		virtual void requestScreenShot(FrameBufferHandle _handle, const char* _filePath) = 0;
+		virtual void setGPUPickingData(const GPUPickingData& _data) = 0;
+		virtual void setScreenCaptureData(const ScreenCaptureData& _data) = 0;
 		virtual void updateViewName(ViewId _id, const char* _name) = 0;
 		virtual void updateUniform(uint16_t _loc, const void* _data, uint32_t _size) = 0;
 		virtual void invalidateOcclusionQuery(OcclusionQueryHandle _handle) = 0;
@@ -4707,7 +4712,7 @@ namespace bgfx
 			cmdbuf.write(_handle);
 			cmdbuf.write(_data);
 			cmdbuf.write(_mip);
-			return m_submit->m_frameNum + 2;
+			return m_submit->m_frameNum;
 		}
 
 		void resizeTexture(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, uint16_t _numLayers)
@@ -5150,6 +5155,22 @@ namespace bgfx
 			ScreenShot& screenShot = m_submit->m_screenShot[m_submit->m_numScreenShots++];
 			screenShot.handle = _handle;
 			screenShot.filePath.set(_filePath);
+		}
+
+		BGFX_API_FUNC(void setGPUPickingData(const GPUPickingData& _data))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			BGFX_CHECK_HANDLE_INVALID_OK("setGPUPickingData", m_frameBufferHandle, _data.mHandle);
+
+			m_submit->m_gpuPickingData = _data;
+		}
+
+		BGFX_API_FUNC(void setScreenCaptureData(const ScreenCaptureData& _data))
+		{
+			BGFX_MUTEX_SCOPE(m_resourceApiLock);
+
+			m_submit->m_screenCaptureData = _data;
 		}
 
 		BGFX_API_FUNC(void setPaletteColor(uint8_t _index, const float _rgba[4]) )

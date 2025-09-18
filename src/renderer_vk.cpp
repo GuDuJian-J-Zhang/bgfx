@@ -2586,6 +2586,14 @@ VK_IMPORT_DEVICE
 			recycleMemory(stagingMemory);
 		}
 
+		void setGPUPickingData(const GPUPickingData& /*_data*/) override
+		{
+		}
+
+		void setScreenCaptureData(const ScreenCaptureData& /*_data*/) override
+		{
+		}
+
 		void updateViewName(ViewId _id, const char* _name) override
 		{
 			bx::strCopy(&s_viewName[_id][BGFX_CONFIG_MAX_VIEW_NAME_RESERVED]
