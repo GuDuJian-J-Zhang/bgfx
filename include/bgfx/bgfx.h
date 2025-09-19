@@ -1899,12 +1899,13 @@ namespace bgfx
 		GPUPickingCallback mCB{ nullptr };
 	};
 
-	using ScreenCaptureCallback = std::function<void(bool)>;
+	using ScreenCaptureCallback = std::function<void(bool, uint64_t)>;
 	struct ScreenCaptureData
 	{
 		FrameBufferHandle mHandle{ bgfx::kInvalidHandle };
 		uint8_t* mpPixelData{ nullptr };
 		ScreenCaptureCallback mCB{ nullptr };
+		uint64_t mFrameStamp{ 0 };
 	};
 
 	/// Pack vertex attribute into vertex stream format.

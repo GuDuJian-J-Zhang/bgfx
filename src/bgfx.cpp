@@ -2496,6 +2496,7 @@ namespace bgfx
 
 					if (m_render->m_screenCaptureData.mpPixelData)
 					{
+						m_render->m_screenCaptureData.mFrameStamp = m_render->m_frameNum;
 						m_renderCtx->setScreenCaptureData(m_render->m_screenCaptureData);
 					}
 				}

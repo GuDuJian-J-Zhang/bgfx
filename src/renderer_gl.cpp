@@ -3710,7 +3710,7 @@ namespace bgfx { namespace gl
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 			if (_data.mCB)
 			{
-				_data.mCB(rt);
+				_data.mCB(rt, _data.mFrameStamp);
 			}
 		}
 
