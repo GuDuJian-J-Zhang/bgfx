@@ -921,7 +921,7 @@ namespace bgfx { namespace gl
 		{ "OES_texture_half_float_linear",            false,                             true  },
 		{ "OES_texture_stencil8",                     false,                             true  },
 		{ "OES_texture_storage_multisample_2d_array", false,                             true  },
-		{ "OES_vertex_array_object",                  false,                             true  },
+		{ "OES_vertex_array_object",                  false,                             !BX_PLATFORM_IOS },
 		{ "OES_vertex_half_float",                    false,                             true  },
 		{ "OES_vertex_type_10_10_10_2",               false,                             true  },
 
@@ -2702,7 +2702,10 @@ namespace bgfx { namespace gl
 					}
 				}
 
-				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
+				for (uint32_t ii = BX_ENABLED(BX_PLATFORM_IOS) ? TextureFormat::Unknown : 0 // skip test on iOS!
+					; ii < TextureFormat::Count
+					; ++ii
+					)
 				{
 					if (TextureFormat::Unknown != ii
 					&&  TextureFormat::UnknownDepth != ii)
@@ -3811,9 +3814,12 @@ namespace bgfx { namespace gl
 			GL_CHECK(glActiveTexture(GL_TEXTURE0) );
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_textures[_blitter.m_texture.idx].m_id) );
 
-			if (m_samplerObjectSupport)
+			if (!BX_ENABLED(BX_PLATFORM_OSX) )
 			{
-				GL_CHECK(glBindSampler(0, 0) );
+				if (m_samplerObjectSupport)
+				{
+					GL_CHECK(glBindSampler(0, 0) );
+				}
 			}
 		}
 
@@ -4264,6 +4270,11 @@ namespace bgfx { namespace gl
 			if (!m_glctx.isValid() )
 			{
 				m_glctx.create(_width, _height, _flags);
+
+#if BX_PLATFORM_IOS
+				// iOS: need to figure out how to deal with FBO created by context.
+				m_backBufferFbo = m_msaaBackBufferFbo = m_glctx.getFbo();
+#endif // BX_PLATFORM_IOS
 			}
 			else
 			{
@@ -6729,8 +6740,8 @@ namespace bgfx { namespace gl
 					const bool usesPacking      = !bx::findIdentifierMatch(code, s_ARB_shading_language_packing).isEmpty();
 					const bool usesInterpQ      = !bx::findIdentifierMatch(code, s_intepolationQualifier).isEmpty();
 
-					uint32_t version = false
-						|| usesTextureArray
+					uint32_t version = BX_ENABLED(BX_PLATFORM_OSX) ? 120
+						:  usesTextureArray
 						|| usesTexture3D
 						|| usesIUsamplers
 						|| usesVertexID
@@ -6738,8 +6749,8 @@ namespace bgfx { namespace gl
 						|| usesTexelFetch
 					    || usesGpuShader4
 						|| usesGpuShader5
-						|| usesInterpQ
-						? 130
+						|| usesInterpQ   ? 130
+						: usesTextureLod ? 120
 						: 120
 						;
 
@@ -6794,14 +6805,30 @@ namespace bgfx { namespace gl
 					if (usesTextureArray)
 					{
 						bx::write(&writer, "#extension GL_EXT_texture_array : enable\n", &err);
-						bx::write(&writer, "#define texture2DArrayLodEXT texture2DArrayLod\n", &err);
-						bx::write(&writer, "#define textureArray texture\n", &err);
+
+						if (BX_ENABLED(BX_PLATFORM_OSX) )
+						{
+							bx::write(&writer, "#define texture2DArrayLod texture2DArray\n", &err);
+						}
+						else
+						{
+							bx::write(&writer, "#define texture2DArrayLodEXT texture2DArrayLod\n", &err);
+							bx::write(&writer, "#define textureArray texture\n", &err);
+						}
 					}
 
 					if (usesTexture3D)
 					{
 						bx::write(&writer, "#define texture3DEXT texture3D\n", &err);
-						bx::write(&writer, "#define texture3DLodEXT texture3DLod\n", &err);
+
+						if (BX_ENABLED(BX_PLATFORM_OSX) )
+						{
+							bx::write(&writer, "#define texture3DLodEXT texture3D\n", &err);
+						}
+						else
+						{
+							bx::write(&writer, "#define texture3DLodEXT texture3DLod\n", &err);
+						}
 					}
 
 					if (130 <= version)
@@ -7678,7 +7705,8 @@ namespace bgfx { namespace gl
 
 		uint32_t frameQueryIdx = UINT32_MAX;
 
-		if (m_timerQuerySupport)
+		if (m_timerQuerySupport
+		&&  !BX_ENABLED(BX_PLATFORM_OSX) )
 		{
 			frameQueryIdx = m_gpuTimer.begin(BGFX_CONFIG_MAX_VIEWS, _render->m_frameNum);
 		}
@@ -7757,7 +7785,7 @@ namespace bgfx { namespace gl
 			  _render
 			, m_gpuTimer
 			, s_viewName
-			, m_timerQuerySupport
+			, m_timerQuerySupport && !BX_ENABLED(BX_PLATFORM_OSX)
 			);
 
 		if (m_occlusionQuerySupport)
