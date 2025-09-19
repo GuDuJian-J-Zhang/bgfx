@@ -1267,6 +1267,16 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 			m_commandBuffer = m_cmd.alloc();
 		}
 
+		void setGPUPickingData(const GPUPickingData& _data) override
+		{
+
+		}
+
+		void setScreenCaptureData(const ScreenCaptureData& _data) override
+		{
+			
+		}
+
 		void updateViewName(ViewId _id, const char* _name) override
 		{
 			bx::strCopy(
