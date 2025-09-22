@@ -179,7 +179,7 @@ namespace bgfx { namespace gl
 			contentView = [nsWindow contentView];
 		}
 
-		if (NULL == g_platformData.context)
+		if (NULL != g_platformData.nwh && NULL == g_platformData.context)
 		{
 #if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)
 			NSOpenGLPixelFormatAttribute profile =
@@ -258,7 +258,7 @@ namespace bgfx { namespace gl
 			m_view    = glView;
 			m_context = glContext;
 		}
-		else
+		else if (NULL != g_platformData.context)
 		{
 			[(NSOpenGLContext*)g_platformData.context makeCurrentContext];
 		}
