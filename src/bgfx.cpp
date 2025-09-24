@@ -377,7 +377,7 @@ namespace bgfx
 		return &g_internalData;
 	}
 
-	uintptr_t overrideInternal(TextureHandle _handle, uintptr_t _ptr)
+	uintptr_t overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _width, uint16_t _height)
 	{
 		BGFX_CHECK_RENDER_THREAD();
 		RendererContextI* rci = s_ctx->m_renderCtx;
@@ -386,7 +386,10 @@ namespace bgfx
 			return 0;
 		}
 
-		rci->overrideInternal(_handle, _ptr);
+		s_ctx->m_textureRef[_handle.idx].m_width = _width;
+		s_ctx->m_textureRef[_handle.idx].m_height = _height;
+
+		rci->overrideInternal(_handle, _ptr, _width, _height);
 
 		return rci->getInternal(_handle);
 	}

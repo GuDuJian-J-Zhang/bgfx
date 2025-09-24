@@ -3495,9 +3495,9 @@ namespace bgfx { namespace gl
 			release(mem);
 		}
 
-		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
+		void overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _width, uint16_t _height) override
 		{
-			m_textures[_handle.idx].overrideInternal(_ptr);
+			m_textures[_handle.idx].overrideInternal(_ptr, _width, _height);
 		}
 
 		uintptr_t getInternal(TextureHandle _handle) override
@@ -6119,11 +6119,13 @@ namespace bgfx { namespace gl
 		}
 	}
 
-	void TextureGL::overrideInternal(uintptr_t _ptr)
+	void TextureGL::overrideInternal(uintptr_t _ptr, uint16_t _width, uint16_t _height)
 	{
 		destroy();
 		m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 		m_id = (GLuint)_ptr;
+		m_width = _width;
+		m_height = _height;
 	}
 
 	void TextureGL::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)

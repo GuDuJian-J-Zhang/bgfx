@@ -2461,7 +2461,7 @@ VK_IMPORT_DEVICE
 			bgfx::release(mem);
 		}
 
-		void overrideInternal(TextureHandle _handle, uintptr_t _ptr) override
+		void overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t _width, uint16_t _height) override
 		{
 			m_textures[_handle.idx].overrideInternal(_ptr);
 		}
