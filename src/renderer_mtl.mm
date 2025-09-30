@@ -3569,9 +3569,9 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 		else
 #endif // BX_PLATFORM_VISIONOS
 		{
-			if (m_metalLayer)
+			if (NULL != m_metalLayer)
 			{
-				release(m_metalLayer);
+				MTL_RELEASE(m_metalLayer);
 			}
 
 #if !BX_PLATFORM_VISIONOS
