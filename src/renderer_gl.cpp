@@ -5062,6 +5062,7 @@ namespace bgfx { namespace gl
 			GLSL_TYPE(GL_SAMPLER_2D);
 			GLSL_TYPE(GL_SAMPLER_2D_ARRAY);
 			GLSL_TYPE(GL_SAMPLER_2D_MULTISAMPLE);
+			GLSL_TYPE(GL_SAMPLER_BUFFER);
 
 			GLSL_TYPE(GL_INT_SAMPLER_2D);
 			GLSL_TYPE(GL_INT_SAMPLER_2D_ARRAY);
@@ -5165,6 +5166,7 @@ namespace bgfx { namespace gl
 		case GL_SAMPLER_2D:
 		case GL_SAMPLER_2D_ARRAY:
 		case GL_SAMPLER_2D_MULTISAMPLE:
+		case GL_SAMPLER_BUFFER:
 
 		case GL_INT_SAMPLER_2D:
 		case GL_INT_SAMPLER_2D_ARRAY:
@@ -5725,9 +5727,11 @@ namespace bgfx { namespace gl
 			|| _target == GL_TEXTURE_2D_ARRAY
 			|| _target == GL_TEXTURE_CUBE_MAP_ARRAY
 			;
+		const bool bBufferTexture = 0 != (m_flags & BGFX_TEXTURE_BUFFER_TEXTURE);
 
 		if (!writeOnly
-		|| (renderTarget && textureArray) )
+		|| (renderTarget && textureArray)
+		|| bBufferTexture)
 		{
 			GL_CHECK(glGenTextures(1, &m_id) );
 			BX_ASSERT(0 != m_id, "Failed to generate texture id.");
@@ -5802,13 +5806,16 @@ namespace bgfx { namespace gl
 
 			setSamplerState(uint32_t(_flags), NULL);
 
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
-			&&  TextureFormat::BGRA8 == m_requestedFormat
-			&&  !s_textureFormat[m_requestedFormat].m_supported
-			&&  s_renderGL->m_textureSwizzleSupport)
+			if (!bBufferTexture)
 			{
-				GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
-				GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask) );
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL)
+					&& TextureFormat::BGRA8 == m_requestedFormat
+					&& !s_textureFormat[m_requestedFormat].m_supported
+					&& s_renderGL->m_textureSwizzleSupport)
+				{
+					GLint swizzleMask[] = { GL_BLUE, GL_GREEN, GL_RED, GL_ALPHA };
+					GL_CHECK(glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask));
+				}
 			}
 		}
 
@@ -5861,33 +5868,33 @@ namespace bgfx { namespace gl
 	void TextureGL::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
 	{
 		bimg::ImageContainer imageContainer;
-
-		if (bimg::imageParse(imageContainer, _mem->data, _mem->size) )
+		if (bimg::imageParse(imageContainer, _mem->data, _mem->size))
 		{
-			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips-1);
+			const uint8_t startLod = bx::min<uint8_t>(_skip, imageContainer.m_numMips - 1);
 
 			bimg::TextureInfo ti;
 			bimg::imageGetSize(
-				  &ti
-				, uint16_t(imageContainer.m_width >>startLod)
-				, uint16_t(imageContainer.m_height>>startLod)
-				, uint16_t(imageContainer.m_depth >>startLod)
+				&ti
+				, uint16_t(imageContainer.m_width >> startLod)
+				, uint16_t(imageContainer.m_height >> startLod)
+				, uint16_t(imageContainer.m_depth >> startLod)
 				, imageContainer.m_cubeMap
 				, 1 < imageContainer.m_numMips
 				, imageContainer.m_numLayers
 				, imageContainer.m_format
-				);
-			ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips-startLod, ti.numMips);
+			);
+			ti.numMips = bx::min<uint8_t>(imageContainer.m_numMips - startLod, ti.numMips);
 
-			m_requestedFormat  = uint8_t(imageContainer.m_format);
-			m_textureFormat    = uint8_t(getViableTextureFormat(imageContainer) );
+			m_requestedFormat = uint8_t(imageContainer.m_format);
+			m_textureFormat = uint8_t(getViableTextureFormat(imageContainer));
 
-			const bool computeWrite = 0 != (_flags&BGFX_TEXTURE_COMPUTE_WRITE);
-			const bool srgb         = 0 != (_flags&BGFX_TEXTURE_SRGB);
-			const bool msaaSample   = 0 != (_flags&BGFX_TEXTURE_MSAA_SAMPLE);
-			uint32_t msaaQuality = ( (_flags&BGFX_TEXTURE_RT_MSAA_MASK)>>BGFX_TEXTURE_RT_MSAA_SHIFT);
+			const bool bBufferTexture = 0 != (_flags & BGFX_TEXTURE_BUFFER_TEXTURE);
+			const bool computeWrite = 0 != (_flags & BGFX_TEXTURE_COMPUTE_WRITE);
+			const bool srgb = 0 != (_flags & BGFX_TEXTURE_SRGB);
+			const bool msaaSample = 0 != (_flags & BGFX_TEXTURE_MSAA_SAMPLE);
+			uint32_t msaaQuality = ((_flags & BGFX_TEXTURE_RT_MSAA_MASK) >> BGFX_TEXTURE_RT_MSAA_SHIFT);
 			msaaQuality = bx::uint32_satsub(msaaQuality, 1);
-			msaaQuality = bx::uint32_min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1<<msaaQuality);
+			msaaQuality = bx::uint32_min(s_renderGL->m_maxMsaa, msaaQuality == 0 ? 0 : 1 << msaaQuality);
 
 			GLenum target = /*msaaSample ? GL_TEXTURE_2D_MULTISAMPLE :*/ GL_TEXTURE_2D;
 			if (imageContainer.m_cubeMap)
@@ -5909,6 +5916,10 @@ namespace bgfx { namespace gl
 				default:                        target = GL_TEXTURE_2D_ARRAY;             break;
 				}
 			}
+			if (bBufferTexture)
+			{
+				target = GL_TEXTURE_BUFFER;
+			}
 
 			if (!init(target
 				, ti.width
@@ -5916,202 +5927,204 @@ namespace bgfx { namespace gl
 				, textureArray ? ti.numLayers : ti.depth
 				, ti.numMips
 				, _flags
-				) )
+			))
 			{
 				return;
 			}
 
 			m_numLayers = ti.numLayers;
 
-			target = isCubeMap()
-				? GL_TEXTURE_CUBE_MAP_POSITIVE_X
-				: m_target
-				;
-
-			const GLenum internalFmt = srgb
-				? s_textureFormat[m_textureFormat].m_internalFmtSrgb
-				: s_textureFormat[m_textureFormat].m_internalFmt
-				;
-			const GLenum fmt = srgb
-				? s_textureFormat[m_textureFormat].m_fmtSrgb
-				: s_textureFormat[m_textureFormat].m_fmt
-				;
-
-			const bool swizzle = true
-				&& TextureFormat::BGRA8 == m_requestedFormat
-				&& !s_textureFormat[m_requestedFormat].m_supported
-				&& !s_renderGL->m_textureSwizzleSupport
-				;
-			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_requestedFormat) );
-			const bool convert    = false
-				|| m_textureFormat != m_requestedFormat
-				|| swizzle
-				;
-
-			BX_TRACE("Texture%-4s %3d: %s %s(requested: %s), layers %d, %dx%dx%d%s."
-				, imageContainer.m_cubeMap ? "Cube" : (1 < imageContainer.m_depth ? "3D" : "2D")
-				, this - s_renderGL->m_textures
-				, getName( (TextureFormat::Enum)m_textureFormat)
-				, srgb ? "+sRGB " : ""
-				, getName( (TextureFormat::Enum)m_requestedFormat)
-				, ti.numLayers
-				, ti.width
-				, ti.height
-				, imageContainer.m_cubeMap ? 6 : (1 < imageContainer.m_depth ? imageContainer.m_depth : 0)
-				, 0 != (m_flags&BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
-				);
-
-			BX_WARN(!convert, "Texture %s%s%s from %s to %s."
-				, swizzle ? "swizzle" : ""
-				, swizzle&&convert ? " and " : ""
-				, convert ? "convert" : ""
-				, getName( (TextureFormat::Enum)m_requestedFormat)
-				, getName( (TextureFormat::Enum)m_textureFormat)
-				);
-
-			uint8_t* temp = NULL;
-			if (convert)
+			if (!bBufferTexture)
 			{
-				temp = (uint8_t*)bx::alloc(g_allocator, ti.width*ti.height*4);
-			}
-
-			const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
-
-			for (uint16_t side = 0; side < numSides; ++side)
-			{
-				uint32_t width  = ti.width;
-				uint32_t height = ti.height;
-				uint32_t depth  = ti.depth;
-				GLenum imageTarget = imageContainer.m_cubeMap && !textureArray
-					? target+side
-					: target
+				target = isCubeMap()
+					? GL_TEXTURE_CUBE_MAP_POSITIVE_X
+					: m_target
 					;
 
-				for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
+				const GLenum internalFmt = srgb
+					? s_textureFormat[m_textureFormat].m_internalFmtSrgb
+					: s_textureFormat[m_textureFormat].m_internalFmt
+					;
+				const GLenum fmt = srgb
+					? s_textureFormat[m_textureFormat].m_fmtSrgb
+					: s_textureFormat[m_textureFormat].m_fmt
+					;
+
+				const bool swizzle = true
+					&& TextureFormat::BGRA8 == m_requestedFormat
+					&& !s_textureFormat[m_requestedFormat].m_supported
+					&& !s_renderGL->m_textureSwizzleSupport
+					;
+				const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_requestedFormat));
+				const bool convert = false
+					|| m_textureFormat != m_requestedFormat
+					|| swizzle
+					;
+
+				BX_TRACE("Texture%-4s %3d: %s %s(requested: %s), layers %d, %dx%dx%d%s."
+					, imageContainer.m_cubeMap ? "Cube" : (1 < imageContainer.m_depth ? "3D" : "2D")
+					, this - s_renderGL->m_textures
+					, getName((TextureFormat::Enum)m_textureFormat)
+					, srgb ? "+sRGB " : ""
+					, getName((TextureFormat::Enum)m_requestedFormat)
+					, ti.numLayers
+					, ti.width
+					, ti.height
+					, imageContainer.m_cubeMap ? 6 : (1 < imageContainer.m_depth ? imageContainer.m_depth : 0)
+					, 0 != (m_flags & BGFX_TEXTURE_RT_MASK) ? " (render target)" : ""
+				);
+
+				BX_WARN(!convert, "Texture %s%s%s from %s to %s."
+					, swizzle ? "swizzle" : ""
+					, swizzle && convert ? " and " : ""
+					, convert ? "convert" : ""
+					, getName((TextureFormat::Enum)m_requestedFormat)
+					, getName((TextureFormat::Enum)m_textureFormat)
+				);
+
+				uint8_t* temp = NULL;
+				if (convert)
 				{
-					width  = bx::uint32_max(1, width);
-					height = bx::uint32_max(1, height);
-					depth  = 1 < imageContainer.m_depth
-						? bx::uint32_max(1, depth)
-						: side
+					temp = (uint8_t*)bx::alloc(g_allocator, ti.width * ti.height * 4);
+				}
+
+				const uint16_t numSides = ti.numLayers * (imageContainer.m_cubeMap ? 6 : 1);
+
+				for (uint16_t side = 0; side < numSides; ++side)
+				{
+					uint32_t width = ti.width;
+					uint32_t height = ti.height;
+					uint32_t depth = ti.depth;
+					GLenum imageTarget = imageContainer.m_cubeMap && !textureArray
+						? target + side
+						: target
 						;
 
-					bimg::ImageMip mip;
-					if (bimg::imageGetRawData(imageContainer, side, lod+startLod, _mem->data, _mem->size, mip) )
+					for (uint8_t lod = 0, num = ti.numMips; lod < num; ++lod)
 					{
-						if (compressed
-						&& !convert)
-						{
-							GL_CHECK(compressedTexImage(imageTarget
-								, lod
-								, internalFmt
-								, width
-								, height
-								, depth
-								, 0
-								, mip.m_size
-								, mip.m_data
-								) );
-						}
-						else
-						{
-							const uint8_t* data = mip.m_data;
+						width = bx::uint32_max(1, width);
+						height = bx::uint32_max(1, height);
+						depth = 1 < imageContainer.m_depth
+							? bx::uint32_max(1, depth)
+							: side
+							;
 
-							if (convert)
+						bimg::ImageMip mip;
+						if (bimg::imageGetRawData(imageContainer, side, lod + startLod, _mem->data, _mem->size, mip))
+						{
+							if (compressed
+								&& !convert)
 							{
-								imageDecodeToRgba8(
-									  g_allocator
-									, temp
+								GL_CHECK(compressedTexImage(imageTarget
+									, lod
+									, internalFmt
+									, width
+									, height
+									, depth
+									, 0
+									, mip.m_size
 									, mip.m_data
-									, mip.m_width
-									, mip.m_height
-									, mip.m_width*4
-									, mip.m_format
-									);
-								data = temp;
+								));
 							}
+							else
+							{
+								const uint8_t* data = mip.m_data;
 
-							GL_CHECK(texImage(imageTarget
-								, msaaQuality
-								, lod
-								, internalFmt
-								, width
-								, height
-								, depth
-								, 0
-								, fmt
-								, m_type
-								, data
-								) );
+								if (convert)
+								{
+									imageDecodeToRgba8(
+										g_allocator
+										, temp
+										, mip.m_data
+										, mip.m_width
+										, mip.m_height
+										, mip.m_width * 4
+										, mip.m_format
+									);
+									data = temp;
+								}
+
+								GL_CHECK(texImage(imageTarget
+									, msaaQuality
+									, lod
+									, internalFmt
+									, width
+									, height
+									, depth
+									, 0
+									, fmt
+									, m_type
+									, data
+								));
+							}
 						}
-					}
-					else if (!computeWrite)
-					{
-						if (compressed
-						&& !convert)
+						else if (!computeWrite)
 						{
-							uint32_t size = bx::max<uint32_t>(1, (width  + 3)>>2)
-										  * bx::max<uint32_t>(1, (height + 3)>>2)
-										  * 4*4* bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) )/8
-										  ;
+							if (compressed
+								&& !convert)
+							{
+								uint32_t size = bx::max<uint32_t>(1, (width + 3) >> 2)
+									* bx::max<uint32_t>(1, (height + 3) >> 2)
+									* 4 * 4 * bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat)) / 8
+									;
 
-							GL_CHECK(compressedTexImage(imageTarget
-								, lod
-								, internalFmt
-								, width
-								, height
-								, depth
-								, 0
-								, size
-								, NULL
-								) );
+								GL_CHECK(compressedTexImage(imageTarget
+									, lod
+									, internalFmt
+									, width
+									, height
+									, depth
+									, 0
+									, size
+									, NULL
+								));
+							}
+							else
+							{
+								GL_CHECK(texImage(imageTarget
+									, msaaQuality
+									, lod
+									, internalFmt
+									, width
+									, height
+									, depth
+									, 0
+									, fmt
+									, m_type
+									, NULL
+								));
+							}
 						}
-						else
-						{
-							GL_CHECK(texImage(imageTarget
-								, msaaQuality
-								, lod
-								, internalFmt
-								, width
-								, height
-								, depth
-								, 0
-								, fmt
-								, m_type
-								, NULL
-								) );
-						}
+
+						width >>= 1;
+						height >>= 1;
+						depth >>= 1;
 					}
+				}
 
-					width  >>= 1;
-					height >>= 1;
-					depth  >>= 1;
+				GLint mapping[4] = {
+					s_textureFormat[m_textureFormat].m_mapping[0],
+					s_textureFormat[m_textureFormat].m_mapping[1],
+					s_textureFormat[m_textureFormat].m_mapping[2],
+					s_textureFormat[m_textureFormat].m_mapping[3],
+				};
+				if (s_renderGL->m_textureSwizzleSupport
+					&& (-1 != mapping[0] || -1 != mapping[1] || -1 != mapping[2] || -1 != mapping[3]))
+				{
+					mapping[0] = -1 == mapping[0] ? GL_RED : mapping[0];
+					mapping[1] = -1 == mapping[1] ? GL_GREEN : mapping[1];
+					mapping[2] = -1 == mapping[2] ? GL_BLUE : mapping[2];
+					mapping[3] = -1 == mapping[3] ? GL_ALPHA : mapping[3];
+
+					GL_CHECK(glTexParameteriv(m_target, GL_TEXTURE_SWIZZLE_RGBA, mapping));
+				}
+
+				if (NULL != temp)
+				{
+					bx::free(g_allocator, temp);
 				}
 			}
-
-			GLint mapping[4] = {
-				s_textureFormat[m_textureFormat].m_mapping[0],
-				s_textureFormat[m_textureFormat].m_mapping[1],
-				s_textureFormat[m_textureFormat].m_mapping[2],
-				s_textureFormat[m_textureFormat].m_mapping[3],
-			};
-			if (s_renderGL->m_textureSwizzleSupport
-			&& (-1 != mapping[0] || -1 != mapping[1] || -1 != mapping[2] || -1 != mapping[3]) )
-			{
-				mapping[0] = -1 == mapping[0] ? GL_RED   : mapping[0];
-				mapping[1] = -1 == mapping[1] ? GL_GREEN : mapping[1];
-				mapping[2] = -1 == mapping[2] ? GL_BLUE  : mapping[2];
-				mapping[3] = -1 == mapping[3] ? GL_ALPHA : mapping[3];
-
-				GL_CHECK(glTexParameteriv(m_target, GL_TEXTURE_SWIZZLE_RGBA, mapping));
-			}
-
-			if (NULL != temp)
-			{
-				bx::free(g_allocator, temp);
-			}
 		}
-
 		GL_CHECK(glBindTexture(m_target, 0) );
 	}
 
@@ -6130,6 +6143,14 @@ namespace bgfx { namespace gl
 			GL_CHECK(glDeleteRenderbuffers(1, &m_rbo) );
 			m_rbo = 0;
 		}
+
+		// for buffer texture
+		if (m_bufferId != UINT32_MAX)
+		{
+			GL_CHECK(glDeleteBuffers(1, &m_bufferId));
+			m_bufferId = UINT32_MAX;
+		}
+		// end for buffer texture
 	}
 
 	void TextureGL::overrideInternal(uintptr_t _ptr, uint16_t _width, uint16_t _height)
@@ -6143,121 +6164,150 @@ namespace bgfx { namespace gl
 
 	void TextureGL::update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem)
 	{
-		const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat) );
-		const uint32_t rectpitch = _rect.m_width*bpp/8;
-		uint32_t srcpitch  = UINT16_MAX == _pitch ? rectpitch : _pitch;
-
-		GL_CHECK(glBindTexture(m_target, m_id) );
-		GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1) );
-
-		GLenum target = isCubeMap()
-			? GL_TEXTURE_CUBE_MAP_POSITIVE_X
-			: m_target
-			;
-
-		const bool swizzle = true
-			&& TextureFormat::BGRA8 == m_requestedFormat
-			&& !s_textureFormat[m_requestedFormat].m_supported
-			&& !s_renderGL->m_textureSwizzleSupport
-			;
-		const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
-		const bool compressed      = bimg::isCompressed(bimg::TextureFormat::Enum(m_requestedFormat) );
-		const bool convert         = false
-			|| (compressed && m_textureFormat != m_requestedFormat)
-			|| swizzle
-			;
-
-		Rect rect;
-		rect.setIntersect(_rect
-			, {
-				0, 0,
-				uint16_t(bx::max(1u, m_width  >> _mip) ),
-				uint16_t(bx::max(1u, m_height >> _mip) ),
-			});
-
-		uint32_t width  = rect.m_width;
-		uint32_t height = rect.m_height;
-
-		uint8_t* temp = NULL;
-		if (convert
-		||  !unpackRowLength)
+		if (m_target == GL_TEXTURE_BUFFER)
 		{
-			temp = (uint8_t*)bx::alloc(g_allocator, rectpitch*height);
-		}
-		else if (unpackRowLength)
-		{
-			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcpitch*8/bpp) );
-		}
-
-		if (compressed
-		&& !convert)
-		{
-			const uint8_t* data = _mem->data;
-
-			if (!unpackRowLength)
+			if (m_bufferId == UINT32_MAX || _mem->size > m_bufferSize)
 			{
-				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
-				data = temp;
+				if (m_bufferId != UINT32_MAX)
+				{
+					glDeleteBuffers(1, &m_bufferId);
+				}
+				GL_CHECK(glGenBuffers(1, &m_bufferId));
+				GL_CHECK(glBindBuffer(m_target, m_bufferId));
+				GL_CHECK(glBufferData(m_target, _mem->size, _mem->data, GL_DYNAMIC_DRAW));
+				GL_CHECK(glBindBuffer(m_target, 0));
+
+				GL_CHECK(glBindTexture(m_target, m_id));
+				const GLenum internalFmt = s_textureFormat[m_textureFormat].m_internalFmt;
+				GL_CHECK(glTexBuffer(GL_TEXTURE_BUFFER, internalFmt, m_bufferId));
+				GL_CHECK(glBindTexture(m_target, 0));
+				m_bufferSize = _mem->size;
 			}
-			const GLenum internalFmt = (0 != (m_flags & BGFX_TEXTURE_SRGB) )
-				? s_textureFormat[m_textureFormat].m_internalFmtSrgb
-				: s_textureFormat[m_textureFormat].m_internalFmt
-				;
-			GL_CHECK(compressedTexSubImage(target+_side
-				, _mip
-				, rect.m_x
-				, rect.m_y
-				, _z
-				, rect.m_width
-				, rect.m_height
-				, _depth
-				, internalFmt
-				, _mem->size
-				, data
-				) );
+			else
+			{
+				GL_CHECK(glBindBuffer(m_target, m_bufferId));
+				GL_CHECK(glBufferSubData(m_target, 0, _mem->size, _mem->data));
+				GL_CHECK(glBindBuffer(m_target, 0));
+			}
 		}
 		else
 		{
-			const uint8_t* data = _mem->data;
+			const uint32_t bpp = bimg::getBitsPerPixel(bimg::TextureFormat::Enum(m_textureFormat));
+			const uint32_t rectpitch = _rect.m_width * bpp / 8;
+			uint32_t srcpitch = UINT16_MAX == _pitch ? rectpitch : _pitch;
 
-			if (convert)
+			GL_CHECK(glBindTexture(m_target, m_id));
+			GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+
+			GLenum target = isCubeMap()
+				? GL_TEXTURE_CUBE_MAP_POSITIVE_X
+				: m_target
+				;
+
+			const bool swizzle = true
+				&& TextureFormat::BGRA8 == m_requestedFormat
+				&& !s_textureFormat[m_requestedFormat].m_supported
+				&& !s_renderGL->m_textureSwizzleSupport
+				;
+			const bool unpackRowLength = !!BGFX_CONFIG_RENDERER_OPENGL || s_extension[Extension::EXT_unpack_subimage].m_supported;
+			const bool compressed = bimg::isCompressed(bimg::TextureFormat::Enum(m_requestedFormat));
+			const bool convert = false
+				|| (compressed && m_textureFormat != m_requestedFormat)
+				|| swizzle
+				;
+
+			Rect rect;
+			rect.setIntersect(_rect
+				, {
+					0, 0,
+					uint16_t(bx::max(1u, m_width >> _mip)),
+					uint16_t(bx::max(1u, m_height >> _mip)),
+				});
+
+			uint32_t width = rect.m_width;
+			uint32_t height = rect.m_height;
+
+			uint8_t* temp = NULL;
+			if (convert
+				|| !unpackRowLength)
 			{
-				bimg::imageDecodeToRgba8(g_allocator, temp, data, width, height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat) );
-				data = temp;
-				srcpitch = rectpitch;
+				temp = (uint8_t*)bx::alloc(g_allocator, rectpitch * height);
+			}
+			else if (unpackRowLength)
+			{
+				GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, srcpitch * 8 / bpp));
 			}
 
-			if (BX_IGNORE_C4127(true
-			&&  !unpackRowLength
-			&&  !convert) )
+			if (compressed
+				&& !convert)
 			{
-				bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
-				data = temp;
+				const uint8_t* data = _mem->data;
+
+				if (!unpackRowLength)
+				{
+					bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
+					data = temp;
+				}
+				const GLenum internalFmt = (0 != (m_flags & BGFX_TEXTURE_SRGB))
+					? s_textureFormat[m_textureFormat].m_internalFmtSrgb
+					: s_textureFormat[m_textureFormat].m_internalFmt
+					;
+				GL_CHECK(compressedTexSubImage(target + _side
+					, _mip
+					, rect.m_x
+					, rect.m_y
+					, _z
+					, rect.m_width
+					, rect.m_height
+					, _depth
+					, internalFmt
+					, _mem->size
+					, data
+				));
+			}
+			else
+			{
+				const uint8_t* data = _mem->data;
+
+				if (convert)
+				{
+					bimg::imageDecodeToRgba8(g_allocator, temp, data, width, height, srcpitch, bimg::TextureFormat::Enum(m_requestedFormat));
+					data = temp;
+					srcpitch = rectpitch;
+				}
+
+				if (BX_IGNORE_C4127(true
+					&& !unpackRowLength
+					&& !convert))
+				{
+					bimg::imageCopy(temp, width, height, 1, bpp, srcpitch, data);
+					data = temp;
+				}
+
+				GL_CHECK(texSubImage(target + _side
+					, _mip
+					, rect.m_x
+					, rect.m_y
+					, _z
+					, rect.m_width
+					, rect.m_height
+					, _depth
+					, m_fmt
+					, m_type
+					, data
+				));
 			}
 
-			GL_CHECK(texSubImage(target+_side
-				, _mip
-				, rect.m_x
-				, rect.m_y
-				, _z
-				, rect.m_width
-				, rect.m_height
-				, _depth
-				, m_fmt
-				, m_type
-				, data
-				) );
-		}
+			if (!convert
+				&& unpackRowLength)
+			{
+				GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, 0));
+			}
 
-		if (!convert
-		&&  unpackRowLength)
-		{
-			GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, 0) );
-		}
-
-		if (NULL != temp)
-		{
-			bx::free(g_allocator, temp);
+			if (NULL != temp)
+			{
+				bx::free(g_allocator, temp);
+			}
 		}
 	}
 
@@ -6299,62 +6349,65 @@ namespace bgfx { namespace gl
 
 		if (hash != m_currentSamplerHash)
 		{
-			const GLenum  target     = m_target == GL_TEXTURE_2D_MULTISAMPLE ? GL_TEXTURE_2D : m_target;
-			const GLenum  targetMsaa = m_target;
-			const uint8_t numMips    = m_numMips;
-
-			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags&BGFX_SAMPLER_U_MASK)>>BGFX_SAMPLER_U_SHIFT]) );
-			GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags&BGFX_SAMPLER_V_MASK)>>BGFX_SAMPLER_V_SHIFT]) );
-
-			if (1 < numMips
-			&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3 || s_extension[Extension::APPLE_texture_max_level].m_supported) )
+			const bool bBufferTexture = 0 != (m_flags & BGFX_TEXTURE_BUFFER_TEXTURE);
+			if (!bBufferTexture)
 			{
-				GL_CHECK(glTexParameteri(targetMsaa, GL_TEXTURE_MAX_LEVEL, numMips-1) );
-			}
+				const GLenum  target = m_target == GL_TEXTURE_2D_MULTISAMPLE ? GL_TEXTURE_2D : m_target;
+				const GLenum  targetMsaa = m_target;
+				const uint8_t numMips = m_numMips;
 
-			if (target == GL_TEXTURE_3D)
-			{
-				GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_R, s_textureAddress[(flags&BGFX_SAMPLER_W_MASK)>>BGFX_SAMPLER_W_SHIFT]) );
-			}
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_S, s_textureAddress[(flags & BGFX_SAMPLER_U_MASK) >> BGFX_SAMPLER_U_SHIFT]));
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_T, s_textureAddress[(flags & BGFX_SAMPLER_V_MASK) >> BGFX_SAMPLER_V_SHIFT]));
 
-			GLenum magFilter;
-			GLenum minFilter;
-			getFilters(flags, 1 < numMips, magFilter, minFilter);
-			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilter) );
-			GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter) );
-
-			if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) )
-			{
-				GL_CHECK(glTexParameterf(target, GL_TEXTURE_LOD_BIAS, float(BGFX_CONFIG_MIP_LOD_BIAS) ) );
-			}
-
-			if (s_renderGL->m_borderColorSupport
-			&&  hasBorderColor)
-			{
-				GL_CHECK(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, _rgba) );
-			}
-
-			if (0 != (flags & (BGFX_SAMPLER_MIN_ANISOTROPIC|BGFX_SAMPLER_MAG_ANISOTROPIC) )
-			&&  0.0f < s_renderGL->m_maxAnisotropy)
-			{
-				GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderGL->m_maxAnisotropy) );
-			}
-
-			if (s_renderGL->m_gles3
-			||  s_renderGL->m_shadowSamplersSupport)
-			{
-				const uint32_t cmpFunc = (flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
-				if (0 == cmpFunc)
+				if (1 < numMips
+					&& (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL) || s_renderGL->m_gles3 || s_extension[Extension::APPLE_texture_max_level].m_supported))
 				{
-					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE) );
+					GL_CHECK(glTexParameteri(targetMsaa, GL_TEXTURE_MAX_LEVEL, numMips - 1));
 				}
-				else
+
+				if (target == GL_TEXTURE_3D)
 				{
-					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE) );
-					GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]) );
+					GL_CHECK(glTexParameteri(target, GL_TEXTURE_WRAP_R, s_textureAddress[(flags & BGFX_SAMPLER_W_MASK) >> BGFX_SAMPLER_W_SHIFT]));
+				}
+
+				GLenum magFilter;
+				GLenum minFilter;
+				getFilters(flags, 1 < numMips, magFilter, minFilter);
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilter));
+				GL_CHECK(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter));
+
+				if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL))
+				{
+					GL_CHECK(glTexParameterf(target, GL_TEXTURE_LOD_BIAS, float(BGFX_CONFIG_MIP_LOD_BIAS)));
+				}
+
+				if (s_renderGL->m_borderColorSupport
+					&& hasBorderColor)
+				{
+					GL_CHECK(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, _rgba));
+				}
+
+				if (0 != (flags & (BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC))
+					&& 0.0f < s_renderGL->m_maxAnisotropy)
+				{
+					GL_CHECK(glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, s_renderGL->m_maxAnisotropy));
+				}
+
+				if (s_renderGL->m_gles3
+					|| s_renderGL->m_shadowSamplersSupport)
+				{
+					const uint32_t cmpFunc = (flags & BGFX_SAMPLER_COMPARE_MASK) >> BGFX_SAMPLER_COMPARE_SHIFT;
+					if (0 == cmpFunc)
+					{
+						GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE));
+					}
+					else
+					{
+						GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE));
+						GL_CHECK(glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, s_cmpFunc[cmpFunc]));
+					}
 				}
 			}
-
 			m_currentSamplerHash = hash;
 		}
 	}
