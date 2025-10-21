@@ -1568,6 +1568,11 @@ namespace bgfx { namespace gl
 		uint8_t m_numMips;
 		uint8_t m_requestedFormat;
 		uint8_t m_textureFormat;
+
+		// for buffer texture
+		uint32_t m_bufferId{ UINT32_MAX };
+		uint32_t m_bufferSize{ 0 };
+		// end for buffer texture
 	};
 
 	struct ShaderGL
