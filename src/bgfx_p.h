@@ -7,6 +7,7 @@
 #define BGFX_P_H_HEADER_GUARD
 
 #include <bx/platform.h>
+#include <vector>
 
 #ifndef BX_CONFIG_DEBUG
 #	error "BX_CONFIG_DEBUG must be defined in build script!"
@@ -2232,6 +2233,7 @@ namespace bgfx
 			m_capture = false;
 			m_numScreenShots = 0;
 			m_frameNum = frameNum;
+			m_screenCaptureDataList.clear();
 		}
 
 		void finish()
@@ -2365,7 +2367,7 @@ namespace bgfx
 		uint8_t m_numScreenShots;
 
 		GPUPickingData m_gpuPickingData;
-		ScreenCaptureData m_screenCaptureData;
+		std::vector<ScreenCaptureData> m_screenCaptureDataList;
 
 		CommandBuffer m_cmdPre;
 		CommandBuffer m_cmdPost;
@@ -5168,7 +5170,7 @@ namespace bgfx
 		{
 			BGFX_MUTEX_SCOPE(m_resourceApiLock);
 
-			m_submit->m_screenCaptureData = _data;
+			m_submit->m_screenCaptureDataList.emplace_back(_data);
 		}
 
 		BGFX_API_FUNC(void setPaletteColor(uint8_t _index, const float _rgba[4]) )
