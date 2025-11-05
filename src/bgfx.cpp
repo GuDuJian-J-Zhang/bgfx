@@ -2724,10 +2724,13 @@ namespace bgfx
 						m_renderCtx->setGPUPickingData(m_render->m_gpuPickingData);
 					}
 
-					if (m_render->m_screenCaptureData.mpPixelData)
+					for (uint8_t ii = 0; ii < m_render->m_screenCaptureDataList.size(); ++ii)
 					{
-						m_render->m_screenCaptureData.mFrameStamp = m_render->m_frameNum;
-						m_renderCtx->setScreenCaptureData(m_render->m_screenCaptureData);
+						if (m_render->m_screenCaptureDataList[ii].mpPixelData)
+						{
+							m_render->m_screenCaptureDataList[ii].mFrameStamp = m_render->m_frameNum;
+							m_renderCtx->setScreenCaptureData(m_render->m_screenCaptureDataList[ii]);
+						}
 					}
 				}
 			}
