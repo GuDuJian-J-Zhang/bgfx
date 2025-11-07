@@ -3646,6 +3646,12 @@ namespace bgfx { namespace gl
 		{
 			bool rt = false;
 			const FrameBufferGL& frameBuffer = m_frameBuffers[_data.mHandle.idx];
+			SwapChainGL* swapChain = frameBuffer.m_swapChain;
+			uint32_t width = frameBuffer.m_width;
+			uint32_t height = frameBuffer.m_height;
+
+			m_glctx.makeCurrent(swapChain);
+
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]));
 			if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
 			{
@@ -3661,10 +3667,10 @@ namespace bgfx { namespace gl
 						const auto& colorTexture = m_textures[colorAttachment.handle.idx];
 						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0));
 						GL_CHECK(glReadPixels(
-							0
-							, 0
-							, frameBuffer.m_width
-							, frameBuffer.m_height
+							_data.mViewportLeft
+							, _data.mViewportBottom
+							, _data.mViewportWidth
+							, _data.mViewportHeight
 							, colorTexture.m_fmt
 							, colorTexture.m_type
 							, _data.mpColorData
@@ -3715,6 +3721,13 @@ namespace bgfx { namespace gl
 		{
 			bool rt = false;
 			const FrameBufferGL& frameBuffer = m_frameBuffers[_data.mHandle.idx];
+
+			SwapChainGL* swapChain = frameBuffer.m_swapChain;
+			uint32_t width = frameBuffer.m_width;
+			uint32_t height = frameBuffer.m_height;
+
+			m_glctx.makeCurrent(swapChain);
+
 			GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer.m_fbo[0]));
 			if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
 			{
@@ -3730,10 +3743,10 @@ namespace bgfx { namespace gl
 						const auto& colorTexture = m_textures[colorAttachment.handle.idx];
 						GL_CHECK(glReadBuffer(GL_COLOR_ATTACHMENT0));
 						GL_CHECK(glReadPixels(
-							0
-							, 0
-							, frameBuffer.m_width
-							, frameBuffer.m_height
+							_data.mViewportLeft
+							, _data.mViewportBottom
+							, _data.mViewportWidth
+							, _data.mViewportHeight
 							, colorTexture.m_fmt
 							, colorTexture.m_type
 							, _data.mpPixelData

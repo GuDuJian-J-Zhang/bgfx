@@ -1951,6 +1951,10 @@ namespace bgfx
 		FrameBufferHandle mHandle{ bgfx::kInvalidHandle };
 		uint8_t* mpColorData{ nullptr };
 		uint8_t* mpDepthData{ nullptr };
+		uint16_t mViewportLeft{ 0 };
+		uint16_t mViewportBottom{ 0 };
+		uint16_t mViewportWidth{ 0 };
+		uint16_t mViewportHeight{ 0 };
 		GPUPickingCallback mCB{ nullptr };
 	};
 
@@ -1960,6 +1964,10 @@ namespace bgfx
 		FrameBufferHandle mHandle{ bgfx::kInvalidHandle };
 		uint8_t* mpPixelData{ nullptr };
 		ScreenCaptureCallback mCB{ nullptr };
+		uint16_t mViewportLeft{ 0 };
+		uint16_t mViewportBottom{ 0 };
+		uint16_t mViewportWidth{ 0 };
+		uint16_t mViewportHeight{ 0 };
 		uint64_t mFrameStamp{ 0 };
 	};
 
