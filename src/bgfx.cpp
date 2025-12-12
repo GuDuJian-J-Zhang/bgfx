@@ -1689,12 +1689,12 @@ namespace bgfx
 	{
 		sizeof(int32_t),
 		0,
-		sizeof(float),
-		2 * sizeof(float),
-		3 * sizeof(float),
 		4*sizeof(float),
 		3*3*sizeof(float),
 		4*4*sizeof(float),
+		sizeof(float),
+		2 * sizeof(float),
+		3 * sizeof(float),
 		1,
 	};
 	static_assert(UniformType::Count+1 == BX_COUNTOF(g_uniformTypeSize), "Must match UniformType::Enum!");

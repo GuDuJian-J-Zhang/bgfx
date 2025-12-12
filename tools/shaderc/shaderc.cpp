@@ -319,6 +319,19 @@ namespace bgfx
 		NULL
 	};
 
+	const char* s_uniformTypeName[] =
+	{
+		"int",  "int",
+		NULL,   NULL,
+		"float", "float",
+		"vec2", "float2",
+		"vec3", "float3",
+		"vec4", "float4",
+		"mat3", "float3x3",
+		"mat4", "float4x4",
+	};
+	static_assert(BX_COUNTOF(s_uniformTypeName) == UniformType::Count*2);
+
 	static const char* s_allowedVertexShaderInputs[] =
 	{
 		"a_position",
