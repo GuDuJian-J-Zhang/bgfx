@@ -308,6 +308,9 @@ namespace bgfx
 	{
 		"int",  "int",
 		NULL,   NULL,
+		"float", "float",
+		"vec2", "float2",
+		"vec3", "float3",
 		"vec4", "float4",
 		"mat3", "float3x3",
 		"mat4", "float4x4",

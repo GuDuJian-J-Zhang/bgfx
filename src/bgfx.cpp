@@ -1516,12 +1516,12 @@ namespace bgfx
 	{
 		sizeof(int32_t),
 		0,
-		sizeof(float),
-		2 * sizeof(float),
-		3 * sizeof(float),
 		4*sizeof(float),
 		3*3*sizeof(float),
 		4*4*sizeof(float),
+		sizeof(float),
+		2 * sizeof(float),
+		3 * sizeof(float),
 		1,
 	};
 
