@@ -2526,6 +2526,7 @@ namespace bgfx
 			m_flush   = false;
 			m_numScreenShots = 0;
 			m_frameNum = frameNum;
+			m_gpuPickingData = {};
 			m_screenCaptureDataList.clear();
 		}
 
