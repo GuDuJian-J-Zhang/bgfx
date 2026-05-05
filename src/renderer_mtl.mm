@@ -773,7 +773,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 			{
-				uint16_t support = 0;
+				uint32_t support = 0;
 
 				support |= MTLPixelFormatInvalid != s_textureFormat[ii].m_fmt
 					? BGFX_CAPS_FORMAT_TEXTURE_2D
@@ -797,6 +797,11 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 						;
+
+					if (MTLPixelFormatInvalid != s_textureFormat[ii].m_fmtSrgb)
+					{
+						support |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB;
+					}
 				}
 
 				support |= true
@@ -815,7 +820,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				g_caps.formats[ii] = support;
 			}
 
-			g_caps.formats[TextureFormat::A8     ] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+			g_caps.formats[TextureFormat::A8     ] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB);
 			g_caps.formats[TextureFormat::RG32I  ] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 			g_caps.formats[TextureFormat::RG32U  ] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
 			g_caps.formats[TextureFormat::RGBA32I] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
@@ -852,7 +857,7 @@ static_assert(BX_COUNTOF(s_accessNames) == Access::Count, "Invalid s_accessNames
 				g_caps.formats[TextureFormat::PTC12A] =
 				g_caps.formats[TextureFormat::PTC14A] = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
-				g_caps.formats[TextureFormat::RGB9E5F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA);
+				g_caps.formats[TextureFormat::RGB9E5F] &= ~(BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA | BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB);
 			}
 
 			for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)

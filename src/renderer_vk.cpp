@@ -286,7 +286,7 @@ VK_IMPORT_DEVICE
 		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_2D,          BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB   } },
 		{ VK_IMAGE_TYPE_3D, VK_IMAGE_USAGE_SAMPLED_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_3D,          BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB   } },
 		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_SAMPLED_BIT,                  VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, { BGFX_CAPS_FORMAT_TEXTURE_CUBE,        BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB } },
-		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,         0,                                   { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, 0                                  } },
+		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,         0,                                   { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB } },
 		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0,                                   { BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER, 0                                  } },
 		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_STORAGE_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_IMAGE_READ,  0                                  } },
 		{ VK_IMAGE_TYPE_2D, VK_IMAGE_USAGE_STORAGE_BIT,                  0,                                   { BGFX_CAPS_FORMAT_TEXTURE_IMAGE_WRITE, 0                                  } },
@@ -1739,7 +1739,7 @@ VK_IMPORT_INSTANCE
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
-					uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+					uint32_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 					const bool depth = bimg::isDepth(bimg::TextureFormat::Enum(ii) );
 					VkFormat fmt = depth
@@ -7591,7 +7591,7 @@ VK_DESTROY
 		const uint64_t textureFlags = (uint64_t(samplerIndex + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_TEXTURE_RT | BGFX_TEXTURE_RT_WRITE_ONLY;
 		m_sampler = s_msaa[samplerIndex];
 
-		const uint16_t requiredCaps = m_sampler.Count > 1
+		const uint32_t requiredCaps = m_sampler.Count > 1
 			? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA
 			: BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
 			;

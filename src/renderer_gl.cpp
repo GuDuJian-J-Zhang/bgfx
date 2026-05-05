@@ -425,6 +425,25 @@ namespace bgfx { namespace gl
 	};
 	static_assert(TextureFormat::Count == BX_COUNTOF(s_rboFormat) );
 
+	// Returns the renderbuffer storage format for the requested texture format.
+	// When _srgb is true, returns the sRGB-encoded variant when available; otherwise
+	// falls back to the linear format (callers may probe / assert as needed).
+	// Renderbuffer storage only supports sRGB encoding for a small set of formats.
+	static GLenum getRboFormat(TextureFormat::Enum _format, bool _srgb)
+	{
+		if (_srgb)
+		{
+			switch (_format)
+			{
+			case TextureFormat::RGB8:  return GL_SRGB8;
+			case TextureFormat::BGRA8: return GL_SRGB8_ALPHA8;
+			case TextureFormat::RGBA8: return GL_SRGB8_ALPHA8;
+			default: break;
+			}
+		}
+		return s_rboFormat[_format];
+	}
+
 	static GLenum s_imageFormat[] =
 	{
 		GL_ZERO,           // BC1
@@ -2087,7 +2106,7 @@ namespace bgfx { namespace gl
 			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 
 			glRenderbufferStorage(GL_RENDERBUFFER
-				, s_rboFormat[_format]
+				, getRboFormat(_format, _srgb)
 				, _dim
 				, _dim
 				);
@@ -2732,7 +2751,7 @@ namespace bgfx { namespace gl
 				{
 					const TextureFormat::Enum fmt = TextureFormat::Enum(ii);
 
-					uint16_t supported = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+					uint32_t supported = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 					supported |= s_textureFormat[ii].m_supported
 						? BGFX_CAPS_FORMAT_TEXTURE_2D
 						| BGFX_CAPS_FORMAT_TEXTURE_3D
@@ -2768,6 +2787,16 @@ namespace bgfx { namespace gl
 
 					supported |= isFramebufferFormatValid(fmt, false, true)
 						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
+						: BGFX_CAPS_FORMAT_TEXTURE_NONE
+						;
+
+					supported |= isFramebufferFormatValid(fmt, /*_srgb*/true, /*_writeOnly*/false)
+						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB
+						: BGFX_CAPS_FORMAT_TEXTURE_NONE
+						;
+
+					supported |= isFramebufferFormatValid(fmt, /*_srgb*/true, /*_writeOnly*/true)
+						? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB
 						: BGFX_CAPS_FORMAT_TEXTURE_NONE
 						;
 
@@ -5846,10 +5875,15 @@ namespace bgfx { namespace gl
 				BX_ASSERT(0 != m_rbo, "Failed to generate renderbuffer id.");
 				GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, m_rbo) );
 
+				const GLenum rboFmt = getRboFormat(
+					  TextureFormat::Enum(m_textureFormat)
+					, 0 != (m_flags & BGFX_TEXTURE_SRGB)
+					);
+
 				if (0 == msaaQuality)
 				{
 					GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER
-						, s_rboFormat[m_textureFormat]
+						, rboFmt
 						, _width
 						, _height
 						) );
@@ -5858,7 +5892,7 @@ namespace bgfx { namespace gl
 				{
 					GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER
 						, msaaQuality
-						, s_rboFormat[m_textureFormat]
+						, rboFmt
 						, _width
 						, _height
 						) );
