@@ -592,7 +592,7 @@ typedef struct bgfx_caps_s
      *   - `BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN` - Texture format supports auto-generated
      *     mips.
      */
-    uint16_t             formats[BGFX_TEXTURE_FORMAT_COUNT];
+    uint32_t             formats[BGFX_TEXTURE_FORMAT_COUNT];
 
 } bgfx_caps_t;
 

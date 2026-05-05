@@ -1382,7 +1382,7 @@ namespace bgfx { namespace d3d12
 
 				for (uint32_t ii = 0; ii < TextureFormat::Count; ++ii)
 				{
-					uint16_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
+					uint32_t support = BGFX_CAPS_FORMAT_TEXTURE_NONE;
 
 					const DXGI_FORMAT fmt = bimg::isDepth(bimg::TextureFormat::Enum(ii) )
 						? s_textureFormat[ii].m_fmtDsv
@@ -1518,6 +1518,14 @@ namespace bgfx { namespace d3d12
 									| D3D12_FORMAT_SUPPORT1_TEXTURECUBE
 									) )
 									? BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.Support1 & (0
+									| D3D12_FORMAT_SUPPORT1_RENDER_TARGET
+									| D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 						}
