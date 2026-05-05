@@ -586,6 +586,11 @@ BX_PRAGMA_DIAGNOSTIC_POP();
 			if (framebuffer)
 			{
 				caps |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER;
+
+				if (MTL::PixelFormatInvalid != tfi.m_fmtSrgb)
+				{
+					caps |= BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB;
+				}
 			}
 
 			if (multisample)

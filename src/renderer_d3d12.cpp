@@ -1843,11 +1843,19 @@ namespace bgfx { namespace d3d12
 									: BGFX_CAPS_FORMAT_TEXTURE_NONE
 									;
 
-							support |= 0 != (data.Support1 & D3D12_FORMAT_SUPPORT1_DISPLAY)
-									|| 0 != (data.Support2 & D3D12_FORMAT_SUPPORT2_DISPLAYABLE)
-									? BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER
-									: BGFX_CAPS_FORMAT_TEXTURE_NONE
-									;
+						support |= 0 != (data.Support1 & D3D12_FORMAT_SUPPORT1_DISPLAY)
+								|| 0 != (data.Support2 & D3D12_FORMAT_SUPPORT2_DISPLAYABLE)
+								? BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER
+								: BGFX_CAPS_FORMAT_TEXTURE_NONE
+								;
+
+						support |= 0 != (data.Support1 & (0
+								| D3D12_FORMAT_SUPPORT1_RENDER_TARGET
+								| D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL
+								) )
+								? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB
+								: BGFX_CAPS_FORMAT_TEXTURE_NONE
+								;
 						}
 						else
 						{

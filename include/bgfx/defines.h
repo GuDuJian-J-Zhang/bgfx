@@ -511,6 +511,7 @@
 #define BGFX_CAPS_FORMAT_TEXTURE_MSAA             UINT32_C(0x00004000) //!< Texture can be sampled as MSAA.
 #define BGFX_CAPS_FORMAT_TEXTURE_MIP_AUTOGEN      UINT32_C(0x00008000) //!< Texture format supports auto-generated mips.
 #define BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER       UINT32_C(0x00010000) //!< Texture format can be used as back buffer format.
+#define BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB UINT32_C(0x00020000) //!< Texture format can be used as sRGB frame buffer (hardware gamma encoding).
 
 #define BGFX_RESOLVE_NONE                         UINT8_C(0x00) //!< No resolve flags.
 #define BGFX_RESOLVE_AUTO_GEN_MIPS                UINT8_C(0x01) //!< Auto-generate mip maps on resolve.

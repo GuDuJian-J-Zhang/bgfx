@@ -1589,12 +1589,20 @@ namespace bgfx { namespace d3d11
 										: BGFX_CAPS_FORMAT_TEXTURE_NONE
 										;
 
-								support |= 0 != (data.OutFormatSupport & (0
-										| D3D11_FORMAT_SUPPORT_DISPLAY
-										) )
-										? BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER
-										: BGFX_CAPS_FORMAT_TEXTURE_NONE
-										;
+							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT_DISPLAY
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_BACKBUFFER
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
+
+							support |= 0 != (data.OutFormatSupport & (0
+									| D3D11_FORMAT_SUPPORT_RENDER_TARGET
+									| D3D11_FORMAT_SUPPORT_DEPTH_STENCIL
+									) )
+									? BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB
+									: BGFX_CAPS_FORMAT_TEXTURE_NONE
+									;
 							}
 							else
 							{
@@ -1611,6 +1619,7 @@ namespace bgfx { namespace d3d11
 								| BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB
 								| BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB
 								| BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB
+								| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB
 								;
 						}
 					}

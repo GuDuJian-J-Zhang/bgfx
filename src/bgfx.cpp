@@ -5105,6 +5105,17 @@ namespace bgfx
 			);
 
 		BGFX_ERROR_CHECK(false
+			|| 0 == (_flags & BGFX_TEXTURE_SRGB)
+			|| 0 == (_flags & BGFX_TEXTURE_RT_MASK)
+			|| 0 != (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_SRGB)
+			, _err
+			, BGFX_ERROR_TEXTURE_VALIDATION
+			, "sRGB render target for this texture format is not supported."
+			, "Texture format: %s."
+			, getName(_format)
+			);
+
+		BGFX_ERROR_CHECK(false
 			|| 0 == (_flags & BGFX_TEXTURE_MSAA_SAMPLE)
 			|| 0 != (g_caps.formats[_format] & BGFX_CAPS_FORMAT_TEXTURE_MSAA)
 			, _err
