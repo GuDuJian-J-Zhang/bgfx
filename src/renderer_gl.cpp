@@ -3085,14 +3085,15 @@ namespace bgfx { namespace gl
 					|| s_extension[Extension::EXT_shader_image_load_store].m_supported
 					;
 
-				g_caps.supported |= 0
-					| (m_atocSupport               ? BGFX_CAPS_ALPHA_TO_COVERAGE      : 0)
-					| (m_conservativeRasterSupport ? BGFX_CAPS_CONSERVATIVE_RASTER    : 0)
-					| (m_occlusionQuerySupport     ? BGFX_CAPS_OCCLUSION_QUERY        : 0)
-					| (m_depthTextureSupport       ? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL : 0)
-					| (computeSupport              ? BGFX_CAPS_COMPUTE                : 0)
-					| (m_imageLoadStoreSupport     ? BGFX_CAPS_IMAGE_RW               : 0)
-					;
+			g_caps.supported |= 0
+				| (m_atocSupport               ? BGFX_CAPS_ALPHA_TO_COVERAGE      : 0)
+				| (m_conservativeRasterSupport ? BGFX_CAPS_CONSERVATIVE_RASTER    : 0)
+				| (m_occlusionQuerySupport     ? BGFX_CAPS_OCCLUSION_QUERY        : 0)
+				| (m_depthTextureSupport       ? BGFX_CAPS_TEXTURE_COMPARE_LEQUAL : 0)
+				| (computeSupport              ? BGFX_CAPS_COMPUTE                : 0)
+				| (m_imageLoadStoreSupport     ? BGFX_CAPS_IMAGE_RW               : 0)
+				| BGFX_CAPS_TEXTURE_EXTERNAL
+				;
 
 				g_caps.supported |= m_glctx.getCaps();
 
@@ -3447,8 +3448,7 @@ namespace bgfx { namespace gl
 
 		void* createTexture(TextureHandle _handle, const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external) override
 		{
-			BX_UNUSED(_external);
-			m_textures[_handle.idx].create(_mem, _flags, _skip);
+			m_textures[_handle.idx].create(_mem, _flags, _skip, _external);
 			return NULL;
 		}
 
@@ -4353,7 +4353,7 @@ namespace bgfx { namespace gl
 		{
 			if (!m_glctx.isValid() )
 			{
-				m_glctx.create(_width, _height, _flags);
+				m_glctx.create(_resolution);
 
 #if BX_PLATFORM_IOS
 				// iOS: need to figure out how to deal with FBO created by context.
@@ -5953,8 +5953,48 @@ namespace bgfx { namespace gl
 		return true;
 	}
 
-	void TextureGL::create(const Memory* _mem, uint64_t _flags, uint8_t _skip)
+	void TextureGL::create(const Memory* _mem, uint64_t _flags, uint8_t _skip, uint64_t _external)
 	{
+		if (_external != 0)
+		{
+			bimg::ImageContainer imageContainer;
+			if (bimg::imageParse(imageContainer, _mem->data, _mem->size))
+			{
+				const uint8_t startLod = bx::min<uint8_t>(_skip, bx::max<uint8_t>(imageContainer.m_numMips, 1) - 1);
+
+				bimg::TextureInfo ti;
+				bimg::imageGetSize(
+					&ti
+					, uint16_t(imageContainer.m_width  >> startLod)
+					, uint16_t(imageContainer.m_height >> startLod)
+					, uint16_t(imageContainer.m_depth  >> startLod)
+					, imageContainer.m_cubeMap
+					, 1 < imageContainer.m_numMips
+					, imageContainer.m_numLayers
+					, imageContainer.m_format
+				);
+
+				m_requestedFormat = uint8_t(imageContainer.m_format);
+				m_textureFormat   = uint8_t(getViableTextureFormat(imageContainer));
+
+				const TextureFormatInfo& tfi = s_textureFormat[m_textureFormat];
+				const bool srgb = 0 != (_flags & BGFX_TEXTURE_SRGB);
+
+				m_target             = GL_TEXTURE_2D;
+				m_width              = ti.width;
+				m_height             = ti.height;
+				m_depth              = ti.depth;
+				m_numMips            = 1;
+				m_numLayers          = ti.numLayers;
+				m_flags              = _flags | BGFX_SAMPLER_INTERNAL_SHARED;
+				m_currentSamplerHash = UINT32_MAX;
+				m_fmt                = srgb ? tfi.m_fmtSrgb : tfi.m_fmt;
+				m_type               = tfi.m_type;
+				m_id                 = (GLuint)_external;
+			}
+			return;
+		}
+
 		bimg::ImageContainer imageContainer;
 		if (bimg::imageParse(imageContainer, _mem->data, _mem->size))
 		{

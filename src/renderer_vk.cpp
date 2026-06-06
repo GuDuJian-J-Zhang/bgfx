@@ -1658,10 +1658,6 @@ VK_IMPORT_INSTANCE
 					dumpExtensions(m_physicalDevice, s_extension);
 				}
 
-				m_physicalDevice = physicalDevices[physicalDeviceIdx];
-
-				bx::memCopy(&s_extension[0], &physicalDeviceExtensions[physicalDeviceIdx][0], sizeof(s_extension) );
-
 				if ( s_extension[Extension::EXT_swapchain_maintenance1].m_supported
 				&& (!s_extension[Extension::EXT_surface_maintenance1  ].m_supported || !s_extension[Extension::KHR_get_surface_capabilities2].m_supported)
 				   )
@@ -2648,7 +2644,7 @@ VK_IMPORT_DEVICE
 			bgfx::release(mem);
 		}
 
-		void overrideInternal(TextureHandle /*_handle*/, uintptr_t /*_ptr*/, uint16_t /*_layerIndex*/) override
+		void overrideInternal(TextureHandle _handle, uintptr_t _ptr, uint16_t /*_layerIndex*/) override
 		{
 			m_textures[_handle.idx].overrideInternal(_ptr);
 		}
@@ -5274,17 +5270,15 @@ VK_DESTROY
 
 		Chunk sbc;
 
-		VkBufferCreateInfo bci =
-		{
-			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-			.pNext = NULL,
-			.flags = 0,
-			.size  = m_chunkSize,
-			.usage = m_usage,
-			.sharingMode           = VK_SHARING_MODE_EXCLUSIVE,
-			.queueFamilyIndexCount = 0,
-			.pQueueFamilyIndices   = NULL,
-		};
+		VkBufferCreateInfo bci = {};
+		bci.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bci.pNext                 = NULL;
+		bci.flags                 = 0;
+		bci.size                  = m_chunkSize;
+		bci.usage                 = m_usage;
+		bci.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
+		bci.queueFamilyIndexCount = 0;
+		bci.pQueueFamilyIndices   = NULL;
 
 		VK_CHECK(vkCreateBuffer(
 			  device
@@ -5358,7 +5352,10 @@ VK_DESTROY
 
 		m_chunkPos = nextOffset;
 
-		return { .offset = offset, .chunkIdx = chunkIdx };
+		ChunkedScratchBufferAlloc result;
+		result.offset   = offset;
+		result.chunkIdx = chunkIdx;
+		return result;
 	}
 
 	void ChunkedScratchBufferVK::write(ChunkedScratchBufferOffset& _outSbo, const void* _vsData, uint32_t _vsSize, const void* _fsData, uint32_t _fsSize)

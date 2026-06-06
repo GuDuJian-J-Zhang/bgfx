@@ -3526,10 +3526,10 @@ namespace bgfx
 
 			UniformCacheKey key =
 			{
-				.m_offset = 0,
-				.m_handle = _handle.idx,
-				.m_size   = 0,
-				.m_view   = _id,
+				0,
+				_handle.idx,
+				0,
+				_id,
 			};
 
 			static constexpr UniformCacheKey::KeyT kViewHandleMask = UniformCacheKey::kViewMask|UniformCacheKey::kHandleMask;
@@ -3595,9 +3595,9 @@ namespace bgfx
 
 				m_uniformEntryMap.insert(stl::make_pair(hash, UniformCacheEntry
 					{
-						.offset   = bx::narrowCast<uint32_t>(offset),
-						.size     = bx::narrowCast<uint16_t>(dataSize),
-						.refCount = 1
+						bx::narrowCast<uint32_t>(offset),
+						bx::narrowCast<uint16_t>(dataSize),
+						1
 					}) );
 
 				bx::memCopy(&m_data[offset], _value, dataSize);
@@ -4972,7 +4972,7 @@ namespace bgfx
 				PredefinedUniform::Enum predefined = nameToPredefinedUniformEnum(_uniforms[i].mName.c_str());
 		        if (PredefinedUniform::Count == predefined && UniformType::End != _uniforms[i].mType)
 		        {
-			        uniforms[sr.m_num] = createUniform(_uniforms[i].mName.c_str(), UniformType::Enum(_uniforms[i].mType), _uniforms[i].mCount);
+			        uniforms[sr.m_num] = createUniform(_uniforms[i].mName.c_str(), UniformFreq::Count, UniformType::Enum(_uniforms[i].mType), _uniforms[i].mCount);
 			        sr.m_num++;
 		        }
 			}

@@ -68,9 +68,9 @@ namespace bgfx
 		{
 			UniformCacheItem item =
 			{
-				.m_offset = m_key.m_offset,
-				.m_size   = m_key.m_size,
-				.m_handle = m_key.m_handle,
+				m_key.m_offset,
+				m_key.m_size,
+				m_key.m_handle,
 			};
 
 			++m_item;

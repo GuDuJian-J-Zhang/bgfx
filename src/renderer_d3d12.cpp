@@ -1444,92 +1444,63 @@ namespace bgfx { namespace d3d12
 					, BGFX_CONFIG_MAX_TEXTURE_SAMPLERS
 					);
 
-				const D3D12_DESCRIPTOR_RANGE samplerDescRange =
-				{
-					.RangeType          = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER,
-					.NumDescriptors     = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS,
-					.BaseShaderRegister = 0,
-					.RegisterSpace      = 0,
-					.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND,
-				};
+				D3D12_DESCRIPTOR_RANGE samplerDescRange = {};
+				samplerDescRange.RangeType          = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+				samplerDescRange.NumDescriptors     = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
+				samplerDescRange.BaseShaderRegister = 0;
+				samplerDescRange.RegisterSpace      = 0;
+				samplerDescRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-				const D3D12_DESCRIPTOR_RANGE srvDescRange =
-				{
-					.RangeType          = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-					.NumDescriptors     = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS,
-					.BaseShaderRegister = 0,
-					.RegisterSpace      = 0,
-					.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND,
-				};
+				D3D12_DESCRIPTOR_RANGE srvDescRange = {};
+				srvDescRange.RangeType          = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+				srvDescRange.NumDescriptors     = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
+				srvDescRange.BaseShaderRegister = 0;
+				srvDescRange.RegisterSpace      = 0;
+				srvDescRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-				const D3D12_DESCRIPTOR_RANGE uavDescRange =
-				{
-					.RangeType          = D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
-					.NumDescriptors     = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS,
-					.BaseShaderRegister = 0,
-					.RegisterSpace      = 0,
-					.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND,
-				};
+				D3D12_DESCRIPTOR_RANGE uavDescRange = {};
+				uavDescRange.RangeType          = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+				uavDescRange.NumDescriptors     = BGFX_CONFIG_MAX_TEXTURE_SAMPLERS;
+				uavDescRange.BaseShaderRegister = 0;
+				uavDescRange.RegisterSpace      = 0;
+				uavDescRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 				{
-					const D3D12_ROOT_PARAMETER renderRootParameter[] =
-					{
-						{ .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-							.DescriptorTable =
-							{
-								.NumDescriptorRanges = 1,
-								.pDescriptorRanges   = &samplerDescRange,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-						},
-						{ .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-							.DescriptorTable =
-							{
-								.NumDescriptorRanges = 1,
-								.pDescriptorRanges   = &srvDescRange,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-						},
-						{
-							.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-							.Constants =
-							{
-								.ShaderRegister = 0,
-								.RegisterSpace  = 0,
-								.Num32BitValues = 0,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX,
-						},
-						{
-							.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-							.Constants =
-							{
-								.ShaderRegister = 0,
-								.RegisterSpace  = 0,
-								.Num32BitValues = 0,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL,
-						},
-						{
-							.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-							.DescriptorTable =
-							{
-								.NumDescriptorRanges = 1,
-								.pDescriptorRanges   = &uavDescRange,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-						},
-					};
-					static_assert(BX_COUNTOF(renderRootParameter) == RenderRp::Count, "");
+					D3D12_ROOT_PARAMETER renderRootParameter[RenderRp::Count] = {};
 
-					const D3D12_ROOT_SIGNATURE_DESC renderRootSignatureDesc =
-					{
-						.NumParameters     = BX_COUNTOF(renderRootParameter),
-						.pParameters       = renderRootParameter,
-						.NumStaticSamplers = 0,
-						.pStaticSamplers   = NULL,
-						.Flags             = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
-					};
+					renderRootParameter[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+					renderRootParameter[0].DescriptorTable.NumDescriptorRanges = 1;
+					renderRootParameter[0].DescriptorTable.pDescriptorRanges   = &samplerDescRange;
+					renderRootParameter[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+					renderRootParameter[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+					renderRootParameter[1].DescriptorTable.NumDescriptorRanges = 1;
+					renderRootParameter[1].DescriptorTable.pDescriptorRanges   = &srvDescRange;
+					renderRootParameter[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+					renderRootParameter[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+					renderRootParameter[2].Constants.ShaderRegister = 0;
+					renderRootParameter[2].Constants.RegisterSpace  = 0;
+					renderRootParameter[2].Constants.Num32BitValues = 0;
+					renderRootParameter[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+					renderRootParameter[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+					renderRootParameter[3].Constants.ShaderRegister = 0;
+					renderRootParameter[3].Constants.RegisterSpace  = 0;
+					renderRootParameter[3].Constants.Num32BitValues = 0;
+					renderRootParameter[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+					renderRootParameter[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+					renderRootParameter[4].DescriptorTable.NumDescriptorRanges = 1;
+					renderRootParameter[4].DescriptorTable.pDescriptorRanges   = &uavDescRange;
+					renderRootParameter[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+					D3D12_ROOT_SIGNATURE_DESC renderRootSignatureDesc = {};
+					renderRootSignatureDesc.NumParameters     = BX_COUNTOF(renderRootParameter);
+					renderRootSignatureDesc.pParameters       = renderRootParameter;
+					renderRootSignatureDesc.NumStaticSamplers = 0;
+					renderRootSignatureDesc.pStaticSamplers   = NULL;
+					renderRootSignatureDesc.Flags             = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 					ID3DBlob* outBlob;
 					DX_CHECK(D3D12SerializeRootSignature(
@@ -1550,54 +1521,35 @@ namespace bgfx { namespace d3d12
 				}
 
 				{
-					const D3D12_ROOT_PARAMETER computeRootParameter[] =
-					{
-						{ .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-							.DescriptorTable =
-							{
-								.NumDescriptorRanges = 1,
-								.pDescriptorRanges   = &samplerDescRange,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-						},
-						{ .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-							.DescriptorTable =
-							{
-								.NumDescriptorRanges = 1,
-								.pDescriptorRanges   = &srvDescRange,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-						},
-						{
-							.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV,
-							.Constants =
-							{
-								.ShaderRegister = 0,
-								.RegisterSpace  = 0,
-								.Num32BitValues = 0,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-						},
-						{
-							.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-							.DescriptorTable =
-							{
-								.NumDescriptorRanges = 1,
-								.pDescriptorRanges   = &uavDescRange,
-							},
-							.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-						},
-					};
-					static_assert(BX_COUNTOF(computeRootParameter) == ComputeRp::Count, "");
+					D3D12_ROOT_PARAMETER computeRootParameter[ComputeRp::Count] = {};
 
-					const D3D12_ROOT_SIGNATURE_DESC computeRootSignatureDesc =
-					{
-						.NumParameters     = BX_COUNTOF(computeRootParameter),
-						.pParameters       = computeRootParameter,
-						.NumStaticSamplers = 0,
-						.pStaticSamplers   = NULL,
-						.Flags             = D3D12_ROOT_SIGNATURE_FLAG_NONE,
-					};
+					computeRootParameter[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+					computeRootParameter[0].DescriptorTable.NumDescriptorRanges = 1;
+					computeRootParameter[0].DescriptorTable.pDescriptorRanges   = &samplerDescRange;
+					computeRootParameter[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+					computeRootParameter[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+					computeRootParameter[1].DescriptorTable.NumDescriptorRanges = 1;
+					computeRootParameter[1].DescriptorTable.pDescriptorRanges   = &srvDescRange;
+					computeRootParameter[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+					computeRootParameter[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+					computeRootParameter[2].Constants.ShaderRegister = 0;
+					computeRootParameter[2].Constants.RegisterSpace  = 0;
+					computeRootParameter[2].Constants.Num32BitValues = 0;
+					computeRootParameter[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+					computeRootParameter[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+					computeRootParameter[3].DescriptorTable.NumDescriptorRanges = 1;
+					computeRootParameter[3].DescriptorTable.pDescriptorRanges   = &uavDescRange;
+					computeRootParameter[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+					D3D12_ROOT_SIGNATURE_DESC computeRootSignatureDesc = {};
+					computeRootSignatureDesc.NumParameters     = BX_COUNTOF(computeRootParameter);
+					computeRootSignatureDesc.pParameters       = computeRootParameter;
+					computeRootSignatureDesc.NumStaticSamplers = 0;
+					computeRootSignatureDesc.pStaticSamplers   = NULL;
+					computeRootSignatureDesc.Flags             = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
 					ID3DBlob* outBlob;
 					DX_CHECK(D3D12SerializeRootSignature(
@@ -4364,12 +4316,10 @@ namespace bgfx { namespace d3d12
 			DX_CHECK(m_commandList[ii].m_commandList->Close() );
 		}
 
-		const D3D12_QUERY_HEAP_DESC queryHeapDesc =
-		{
-			.Type     = D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS,
-			.Count    = kMaxCommandLists,
-			.NodeMask = 1,
-		};
+		D3D12_QUERY_HEAP_DESC queryHeapDesc = {};
+		queryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS;
+		queryHeapDesc.Count    = kMaxCommandLists;
+		queryHeapDesc.NodeMask = 1;
 
 		DX_CHECK(_device->CreateQueryHeap(
 			  &queryHeapDesc
@@ -4381,11 +4331,9 @@ namespace bgfx { namespace d3d12
 		m_pipelineStatsReadBack = createCommittedResource(_device, HeapProperty::ReadBack, kMaxCommandLists*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS) );
 		setDebugObjectName(m_pipelineStatsReadBack, "Pipeline Statistics Read-Back");
 
-		const D3D12_RANGE range =
-		{
-			.Begin = 0,
-			.End = kMaxCommandLists*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS),
-		};
+		D3D12_RANGE range = {};
+		range.Begin = 0;
+		range.End = kMaxCommandLists*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS);
 		m_pipelineStatsReadBack->Map(0, &range, (void**)&m_pipelineStats);
 	}
 
@@ -4406,11 +4354,9 @@ namespace bgfx { namespace d3d12
 			DX_RELEASE(m_commandQueue, 0);
 		}
 
-		const D3D12_RANGE range =
-		{
-			.Begin = 0,
-			.End = kMaxCommandLists*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS),
-		};
+		D3D12_RANGE range = {};
+		range.Begin = 0;
+		range.End = kMaxCommandLists*sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS);
 		m_pipelineStatsReadBack->Unmap(0, &range);
 		DX_RELEASE(m_pipelineStatsQueryHeap, 0);
 		DX_RELEASE(m_pipelineStatsReadBack, 0);
@@ -6667,12 +6613,10 @@ namespace bgfx { namespace d3d12
 	{
 		ID3D12Device* device = s_renderD3D12->m_device;
 
-		D3D12_QUERY_HEAP_DESC queryHeapDesc =
-		{
-			.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
-			.Count    = m_control.m_size * 2,
-			.NodeMask = 1,
-		};
+		D3D12_QUERY_HEAP_DESC queryHeapDesc = {};
+		queryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+		queryHeapDesc.Count    = m_control.m_size * 2;
+		queryHeapDesc.NodeMask = 1;
 
 		DX_CHECK(device->CreateQueryHeap(
 			  &queryHeapDesc
@@ -6690,7 +6634,9 @@ namespace bgfx { namespace d3d12
 
 		DX_CHECK(s_renderD3D12->m_cmd.m_commandQueue->GetTimestampFrequency(&m_frequency) );
 
-		D3D12_RANGE range = { .Begin = 0, .End = size };
+		D3D12_RANGE range = {};
+		range.Begin = 0;
+		range.End = size;
 		m_readback->Map(0, &range, (void**)&m_queryResult);
 
 		for (uint32_t ii = 0; ii < BX_COUNTOF(m_result); ++ii)

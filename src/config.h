@@ -118,7 +118,6 @@
 					/*|| BX_PLATFORM_EMSCRIPTEN*/ \
 					|| BX_PLATFORM_LINUX          \
 					|| BX_PLATFORM_OSX            \
-					|| BX_PLATFORM_WINDOWS        \
 					? 1 : 0)
 #	endif // BGFX_CONFIG_RENDERER_WEBGPU
 

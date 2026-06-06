@@ -799,7 +799,11 @@ VK_DESTROY_FUNC(DescriptorSet);
 		static VkImageAspectFlags getAspectMask(VkFormat _format);
 	};
 
-	constexpr uint32_t kMaxBackBuffers = bx::max(BGFX_CONFIG_MAX_BACK_BUFFERS, 10);
+#if BGFX_CONFIG_MAX_BACK_BUFFERS >= 10
+	static const uint32_t kMaxBackBuffers = BGFX_CONFIG_MAX_BACK_BUFFERS;
+#else
+	static const uint32_t kMaxBackBuffers = 10;
+#endif
 
 	struct SwapChainVK
 	{
