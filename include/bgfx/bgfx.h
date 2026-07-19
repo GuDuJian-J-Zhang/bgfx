@@ -3948,6 +3948,20 @@ namespace bgfx
 	///
 	const InternalData* getInternalData();
 
+	/// Get native API pointer for an internal texture.
+	///
+	/// @param[in] _handle Texture handle.
+	///
+	/// @returns Native API pointer to texture. If result is 0, texture is not created
+	///   yet from the main thread.
+	///
+	/// @attention It's expected you understand some bgfx internals before you
+	///   use this call.
+	///
+	/// @warning Must be called only on render thread.
+	///
+	uintptr_t getInternal(TextureHandle _handle);
+
 	/// Override internal texture with externally created texture. Previously
 	/// created internal texture will released.
 	///

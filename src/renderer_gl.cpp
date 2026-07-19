@@ -8995,6 +8995,18 @@ namespace bgfx { namespace gl
 				// switch state back to default for cases when the on-screen draw is done externally
 				GL_CHECK(glDisable(GL_FRAMEBUFFER_SRGB) );
 			}
+
+			if (m_samplerObjectSupport)
+			{
+				// switch state back to default for cases when the on-screen draw is done externally
+				for (uint32_t stage = 0; stage < BGFX_CONFIG_MAX_TEXTURE_SAMPLERS; ++stage)
+				{
+					GL_CHECK(glBindSampler(stage, 0) );
+				}
+			}
+
+			GL_CHECK(glActiveTexture(GL_TEXTURE0) );
+			GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4) );
 		}
 
 		BGFX_GL_PROFILER_END();
