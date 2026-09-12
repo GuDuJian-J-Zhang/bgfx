@@ -22,6 +22,23 @@ namespace bgfx { namespace gl
 		}
 	}
 
+	static int32_t glslVersionFromOpenGL(int32_t gl)
+	{
+		if (gl >= 33)
+		{
+			return gl * 10;
+		}
+		if (gl == 32)
+		{
+			return 150;
+		}
+		if (gl == 31)
+		{
+			return 140;
+		}
+		return 120;
+	}
+
 	struct PrimInfo
 	{
 		GLenum m_type;
@@ -4766,6 +4783,62 @@ namespace bgfx { namespace gl
 					GL_CHECK(glDisable(GL_SCISSOR_TEST) );
 				}
 			}
+			else if (BX_ENABLED(BGFX_CONFIG_RENDERER_OPENGL >= 30 || BGFX_CONFIG_RENDERER_OPENGLES >= 30) )
+			{
+				BX_UNUSED(_clearQuad);
+
+				GL_CHECK(glEnable(GL_SCISSOR_TEST) );
+				GL_CHECK(glScissor(_rect.m_x
+					, _height-_rect.m_height-_rect.m_y
+					, _rect.m_width
+					, _rect.m_height
+					) );
+
+				if (BGFX_CLEAR_COLOR & _clear.m_flags)
+				{
+					GL_CHECK(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE) );
+
+					for (uint32_t ii = 0; ii < numMrt; ++ii)
+					{
+						float rgba[4];
+						if (BGFX_CLEAR_COLOR_USE_PALETTE & _clear.m_flags)
+						{
+							uint8_t index = (uint8_t)bx::min(BGFX_CONFIG_MAX_COLOR_PALETTE-1, _clear.m_index[ii]);
+							bx::memCopy(rgba, _palette[index], 16);
+						}
+						else
+						{
+							rgba[0] = _clear.m_index[0] * 1.0f / 255.0f;
+							rgba[1] = _clear.m_index[1] * 1.0f / 255.0f;
+							rgba[2] = _clear.m_index[2] * 1.0f / 255.0f;
+							rgba[3] = _clear.m_index[3] * 1.0f / 255.0f;
+						}
+
+						GL_CHECK(glClearBufferfv(GL_COLOR, GLint(ii), rgba) );
+					}
+				}
+
+				if ( (BGFX_CLEAR_DEPTH|BGFX_CLEAR_STENCIL) & _clear.m_flags)
+				{
+					GLuint flags = 0;
+					if (BGFX_CLEAR_DEPTH & _clear.m_flags)
+					{
+						flags |= GL_DEPTH_BUFFER_BIT;
+						GL_CHECK(glClearDepth(_clear.m_depth) );
+						GL_CHECK(glDepthMask(GL_TRUE) );
+					}
+
+					if (BGFX_CLEAR_STENCIL & _clear.m_flags)
+					{
+						flags |= GL_STENCIL_BUFFER_BIT;
+						GL_CHECK(glClearStencil(_clear.m_stencil) );
+					}
+
+					GL_CHECK(glClear(flags) );
+				}
+
+				GL_CHECK(glDisable(GL_SCISSOR_TEST) );
+			}
 			else
 			{
 				if (0 != m_vao)
@@ -7132,7 +7205,7 @@ namespace bgfx { namespace gl
 					}
 					else
 					{
-						bx::write(&writer, "#version 150\n", &err);
+						bx::write(&writer, &err, "#version %d\n", glslVersionFromOpenGL(BGFX_CONFIG_RENDERER_OPENGL));
 					}
 
 					bx::write(&writer
